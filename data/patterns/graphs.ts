@@ -18,9 +18,9 @@ export const graphs: Pattern[] = [
     typicalQuestion: "Given n nodes and an edge list, determine reachability.",
     mentalModel: {
       lines: [
-        "Adjacency list: [][]int, O(V+E) space — the default.",
-        "Adjacency matrix: [][]bool, O(V²) — only for dense graphs or O(1) edge tests.",
-        "Implicit: a neighbours(state) function — grids, word ladders, puzzles.",
+        "Adjacency list: a slice of slices. The default choice.",
+        "Adjacency matrix: only when the graph is dense or you need O(1) edge checks.",
+        "Implicit: a function that hands you the neighbours. Grids and puzzles.",
       ],
       diagram: `  edges [[0,1],[1,2],[0,3]]
 
@@ -30,13 +30,13 @@ export const graphs: Pattern[] = [
         3 → 0
 
   undirected: append BOTH directions`,
-      key: "Build the adjacency list first, then the algorithm is the easy half.",
+      key: "Build the adjacency list first. The algorithm is the easy half.",
     },
     templates: [
       {
         name: "Adjacency list",
         filename: "adjacency.go",
-        note: "The three lines that start most graph solutions.",
+        note: "The three lines most graph solutions start with.",
         code: `func buildAdj(n int, edges [][]int, directed bool) [][]int {
     adj := make([][]int, n)
     for _, e := range edges {
@@ -51,7 +51,7 @@ export const graphs: Pattern[] = [
       {
         name: "Weighted",
         filename: "weighted.go",
-        note: "A small struct is clearer than parallel slices.",
+        note: "A small struct is clearer than two parallel slices.",
         code: `type Edge struct {
     To, Weight int
 }
@@ -69,7 +69,7 @@ func buildWeighted(n int, edges [][]int) [][]Edge {
       {
         name: "Grid as a graph",
         filename: "grid_graph.go",
-        note: "Four directions in a table keeps the bounds check in exactly one place.",
+        note: "A direction table keeps the bounds check in one place.",
         code: `var dirs = [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 
 func neighbours(grid [][]int, r, c int) [][2]int {
@@ -92,7 +92,7 @@ var dirs8 = [8][2]int{
       {
         name: "Implicit state graph",
         filename: "implicit.go",
-        note: "Never materialise the graph — generate neighbours on demand.",
+        note: "Never build the graph. Make the neighbours when you need them.",
         code: `// word ladder: neighbours are words one letter apart
 func wordNeighbours(word string, dict map[string]bool) []string {
     var out []string
@@ -151,16 +151,16 @@ func wordNeighbours(word string, dict map[string]bool) []string {
     typicalQuestion: "What is the minimum number of transformations from beginWord to endWord?",
     mentalModel: {
       lines: [
-        "BFS dequeues nodes in non-decreasing distance order.",
-        "So the first time a node is reached, it is via a shortest path — mark it then.",
-        "Each level is one unit further from the source.",
+        "BFS takes nodes in order of distance.",
+        "So the first time you reach a node, that is the shortest way there.",
+        "Every step must cost the same, or this stops being true.",
       ],
       diagram: `  dist 0  ●
   dist 1  ● ● ●
   dist 2  ● ● ● ●
 
   visited on ENQUEUE, never on dequeue`,
-      key: "Equal edge weights are the precondition. Unequal weights need Dijkstra.",
+      key: "Equal edge costs are the requirement. Different costs need Dijkstra.",
     },
     templates: [
       {
@@ -194,7 +194,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Word ladder",
         filename: "word_ladder.go",
-        note: "Neighbours are generated, not stored — the graph is never built.",
+        note: "Neighbours are made up on the spot. The graph is never built.",
         code: `func ladderLength(begin, end string, wordList []string) int {
     dict := map[string]bool{}
     for _, w := range wordList {
@@ -206,31 +206,27 @@ func wordNeighbours(word string, dict map[string]bool) []string {
 
     queue := []string{begin}
     delete(dict, begin)
-    steps := 1
 
-    for len(queue) > 0 {
-        size := len(queue)
-        for i := 0; i < size; i++ {
-            cur := queue[0]
-            queue = queue[1:]
+    for steps := 1; len(queue) > 0; steps++ {
+        var next []string
+        for _, cur := range queue {
             if cur == end {
                 return steps
             }
             b := []byte(cur)
-            for j := range b {
-                orig := b[j]
+            for i := range b {
+                orig := b[i]
                 for c := byte('a'); c <= 'z'; c++ {
-                    b[j] = c
-                    cand := string(b)
-                    if dict[cand] {
-                        delete(dict, cand) // visit on enqueue
-                        queue = append(queue, cand)
+                    b[i] = c
+                    if w := string(b); dict[w] {
+                        delete(dict, w) // mark it the moment we queue it
+                        next = append(next, w)
                     }
                 }
-                b[j] = orig
+                b[i] = orig
             }
         }
-        steps++
+        queue = next // move on to the next ring
     }
     return 0
 }`,
@@ -238,7 +234,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "0-1 BFS",
         filename: "zero_one_bfs.go",
-        note: "Weights of only 0 and 1: a deque replaces the heap, giving O(V+E).",
+        note: "Costs of only 0 and 1: a deque replaces the heap.",
         code: `func zeroOneBFS(adj [][]Edge, src int) []int {
     dist := make([]int, len(adj))
     for i := range dist {
@@ -301,9 +297,9 @@ func wordNeighbours(word string, dict map[string]bool) []string {
     typicalQuestion: "How many islands are there in this grid?",
     mentalModel: {
       lines: [
-        "Mark on entry, recurse into each neighbour, and (for reachability) never unmark.",
-        "Unmark on exit only when enumerating paths — that is backtracking, and it is exponential.",
-        "Entry and exit times give you the structure: cycles, bridges, topological order.",
+        "Mark a node, then walk into each neighbour.",
+        "For reachability, never unmark.",
+        "Unmark on the way out only when listing paths, and expect it to be slow.",
       ],
       diagram: `  dfs(u):
       seen[u] = true
@@ -312,13 +308,13 @@ func wordNeighbours(word string, dict map[string]bool) []string {
 
   reachability → never unmark
   path enumeration → unmark on the way out`,
-      key: "Whether you unmark decides between linear and exponential.",
+      key: "Whether you unmark is the difference between linear and exponential.",
     },
     templates: [
       {
         name: "Recursive DFS",
         filename: "dfs.go",
-        note: "Closure recursion is the idiomatic Go form.",
+        note: "A closure that calls itself is the idiomatic Go form.",
         code: `func dfsAll(adj [][]int) []bool {
     seen := make([]bool, len(adj))
 
@@ -343,7 +339,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Flood fill",
         filename: "flood_fill.go",
-        note: "Mutating the grid is the cheapest visited set — say so if asked about side effects.",
+        note: "Writing into the grid is the cheapest visited set there is.",
         code: `func numIslands(grid [][]byte) int {
     var fill func(r, c int)
     fill = func(r, c int) {
@@ -372,7 +368,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Iterative DFS",
         filename: "dfs_iterative.go",
-        note: "When recursion depth is a risk — 1e5 nodes in a chain.",
+        note: "For when recursion depth is a risk, like 100k nodes in a line.",
         code: `func dfsIterative(adj [][]int, src int) []bool {
     seen := make([]bool, len(adj))
     stack := []int{src}
@@ -395,7 +391,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Bridges (Tarjan)",
         filename: "bridges.go",
-        note: "low[v] > disc[u] means the edge u–v is the only way into v's subtree.",
+        note: "low[v] > disc[u] means u-v is the only way into v's side.",
         code: `func criticalConnections(n int, connections [][]int) [][]int {
     adj := buildAdj(n, connections, false)
     disc := make([]int, n)
@@ -468,16 +464,16 @@ func wordNeighbours(word string, dict map[string]bool) []string {
     typicalQuestion: "How many separate provinces are there in this connectivity matrix?",
     mentalModel: {
       lines: [
-        "Start a search from each unvisited node; each start is one new component.",
-        "DFS/BFS labels components in O(V+E) when the graph is static.",
-        "Union-Find is better when edges arrive incrementally.",
+        "Start a search from each node you have not seen.",
+        "Each fresh start is one more group.",
+        "Use Union-Find instead when the edges arrive over time.",
       ],
       diagram: `  ● ● ●    ● ●      ●
   └─┬─┘    └─┘
     1        2       3
 
   components = number of search starts`,
-      key: "The number of components is the number of times the outer loop starts a fresh search.",
+      key: "The number of groups is the number of times the outer loop starts a search.",
     },
     templates: [
       {
@@ -511,7 +507,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Label + size",
         filename: "label_components.go",
-        note: "Storing the component id per node answers 'are u and v connected' in O(1) afterwards.",
+        note: "Storing a group id per node answers 'are these two connected' instantly.",
         code: `func labelComponents(adj [][]int) (comp []int, sizes []int) {
     comp = make([]int, len(adj))
     for i := range comp {
@@ -546,7 +542,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Grid regions",
         filename: "max_area.go",
-        note: "Flood fill returning a size rather than a flag.",
+        note: "Flood fill that returns a size rather than a flag.",
         code: `func maxAreaOfIsland(grid [][]int) int {
     var fill func(r, c int) int
     fill = func(r, c int) int {
@@ -602,9 +598,9 @@ func wordNeighbours(word string, dict map[string]bool) []string {
     typicalQuestion: "Can all courses be finished given these prerequisites?",
     mentalModel: {
       lines: [
-        "Directed: white (unvisited), grey (on the current path), black (done).",
-        "An edge into a grey node is a back edge — a cycle.",
-        "Undirected: any visited neighbour that is not the parent closes a cycle.",
+        "Directed: colour nodes white, grey while on the current path, black when done.",
+        "An edge into a grey node closes a loop.",
+        "Undirected: any neighbour you have seen that is not your parent closes a loop.",
       ],
       diagram: `  directed
   white ──▶ grey ──▶ black
@@ -619,7 +615,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Directed (colours)",
         filename: "cycle_directed.go",
-        note: "Marking black on exit is what separates a back edge from a cross edge.",
+        note: "Turning a node black on the way out is what separates a loop from a shortcut.",
         code: `func hasCycleDirected(adj [][]int) bool {
     const (
         white = 0
@@ -654,7 +650,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Undirected",
         filename: "cycle_undirected.go",
-        note: "Pass the parent down; every other visited neighbour means a cycle.",
+        note: "Pass the parent down. Every other seen neighbour means a cycle.",
         code: `func hasCycleUndirected(n int, adj [][]int) bool {
     seen := make([]bool, n)
 
@@ -683,7 +679,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Kahn's check",
         filename: "kahn_cycle.go",
-        note: "If the queue drains fewer than n nodes, the remainder is inside a cycle.",
+        note: "If fewer than n nodes come out, the rest are stuck in a cycle.",
         code: `func canFinish(n int, prerequisites [][]int) bool {
     adj := make([][]int, n)
     indeg := make([]int, n)
@@ -722,7 +718,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
     variations: [
       { name: "Find the cycle itself", detail: "Keep a parent array and walk back from the grey node that closed it." },
       { name: "Safe states", detail: "Nodes that reach no cycle — reverse topological sort, or black-marking DFS." },
-      { name: "Functional graph", detail: "One out-edge per node: use fast/slow pointers instead." },
+      { name: "One edge out per node", detail: "Each node points at exactly one other, so use fast and slow pointers instead." },
       { name: "Union-Find on undirected", detail: "An edge whose endpoints already share a root closes a cycle." },
     ],
     mistakes: [
@@ -749,9 +745,9 @@ func wordNeighbours(word string, dict map[string]bool) []string {
     typicalQuestion: "Return an order in which all courses can be taken.",
     mentalModel: {
       lines: [
-        "Kahn: repeatedly take a node with in-degree zero and remove its edges.",
-        "If the queue empties before all nodes are output, a cycle exists.",
-        "DFS alternative: push each node after its descendants, then reverse.",
+        "Repeatedly take a node with nothing left waiting on it.",
+        "Remove its edges, which may free up more nodes.",
+        "If you run out before finishing, there is a cycle.",
       ],
       diagram: `  indeg  A:0  B:1  C:2
 
@@ -760,13 +756,13 @@ func wordNeighbours(word string, dict map[string]bool) []string {
   queue [C] → output C
 
   order A B C`,
-      key: "Kahn's algorithm detects cycles for free — count what you emit.",
+      key: "Kahn's algorithm finds cycles for free: just count what came out.",
     },
     templates: [
       {
         name: "Kahn (BFS)",
         filename: "topo_kahn.go",
-        note: "Returns nil when a cycle exists — the count check is the detector.",
+        note: "Returns nil when there is a cycle. The count check is the detector.",
         code: `func topoSort(n int, edges [][]int) []int {
     adj := make([][]int, n)
     indeg := make([]int, n)
@@ -805,7 +801,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "DFS post-order",
         filename: "topo_dfs.go",
-        note: "Append on the way out, then reverse. Needs a separate cycle check.",
+        note: "Add on the way out, then reverse. Needs its own cycle check.",
         code: `func topoDFS(n int, adj [][]int) []int {
     colour := make([]int, n)
     order := make([]int, 0, n)
@@ -842,7 +838,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "Lexicographically smallest",
         filename: "topo_lex.go",
-        note: "Swap the queue for a min-heap when ties must break in a defined order.",
+        note: "Swap the queue for a min-heap when ties must break in order.",
         code: `func topoSmallest(n int, adj [][]int, indeg []int) []int {
     h := &IntHeap{}
     for u := 0; u < n; u++ {
@@ -868,7 +864,7 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       {
         name: "DP over a DAG",
         filename: "dag_dp.go",
-        note: "Process in topological order and every dependency is already final.",
+        note: "In topological order every dependency is already final.",
         code: `func longestPathDAG(n int, adj [][]int, order []int) int {
     dp := make([]int, n)
     for _, u := range order {
@@ -916,9 +912,9 @@ func wordNeighbours(word string, dict map[string]bool) []string {
     typicalQuestion: "Find the edge that, when added, creates a cycle.",
     mentalModel: {
       lines: [
-        "Every set is a tree; the root is the set's identity.",
-        "Find walks to the root and flattens the path on the way back.",
-        "Union attaches the smaller tree under the larger.",
+        "Every group is a tree, and the root is its name.",
+        "Find walks to the root, flattening the path behind it.",
+        "Union hangs the smaller tree under the bigger one.",
       ],
       diagram: `  before          after find(d)
       a               a
@@ -928,48 +924,43 @@ func wordNeighbours(word string, dict map[string]bool) []string {
     d
 
   path compression flattens as it goes`,
-      key: "Two elements are connected exactly when they share a root.",
+      key: "Two things are connected exactly when they share a root.",
     },
     templates: [
       {
         name: "DSU",
         filename: "dsu.go",
-        note: "Path compression plus union by size. Count tracks the number of components.",
+        note: "Flattening plus size-based merging. Count tracks how many groups remain.",
         code: `type DSU struct {
     parent []int
     size   []int
-    Count  int
+    Count  int // how many groups are left
 }
 
 func NewDSU(n int) *DSU {
-    d := &DSU{
-        parent: make([]int, n),
-        size:   make([]int, n),
-        Count:  n,
-    }
+    d := &DSU{parent: make([]int, n), size: make([]int, n), Count: n}
     for i := range d.parent {
-        d.parent[i] = i
-        d.size[i] = 1
+        d.parent[i], d.size[i] = i, 1
     }
     return d
 }
 
 func (d *DSU) Find(x int) int {
     for d.parent[x] != x {
-        d.parent[x] = d.parent[d.parent[x]] // path halving
+        d.parent[x] = d.parent[d.parent[x]] // flatten as we climb
         x = d.parent[x]
     }
     return x
 }
 
-// returns false if they were already connected
+// false means they were already in the same group
 func (d *DSU) Union(a, b int) bool {
     ra, rb := d.Find(a), d.Find(b)
     if ra == rb {
         return false
     }
     if d.size[ra] < d.size[rb] {
-        ra, rb = rb, ra
+        ra, rb = rb, ra // smaller tree goes under the bigger
     }
     d.parent[rb] = ra
     d.size[ra] += d.size[rb]
@@ -982,7 +973,7 @@ func (d *DSU) Connected(a, b int) bool { return d.Find(a) == d.Find(b) }`,
       {
         name: "Non-integer keys",
         filename: "dsu_map.go",
-        note: "A map-backed DSU for strings, emails, coordinates.",
+        note: "A map-backed version for strings, emails or coordinates.",
         code: `type MapDSU struct {
     parent map[string]string
 }
@@ -1008,7 +999,7 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "Grid DSU",
         filename: "dsu_grid.go",
-        note: "Flatten (r, c) to r*cols + c; union right and down only, to avoid double work.",
+        note: "Flatten (r, c) to r*cols + c. Only join right and down to avoid doing it twice.",
         code: `func numIslandsDSU(grid [][]byte) int {
     rows, cols := len(grid), len(grid[0])
     dsu := NewDSU(rows * cols)
@@ -1033,20 +1024,20 @@ func (d *MapDSU) Union(a, b string) {
       },
     ],
     complexity: [
-      { label: "Find", value: "O(α(n))", note: "inverse Ackermann — under 5 for any realistic n" },
+      { label: "Find", value: "O(α(n))", note: "effectively a constant" },
       { label: "Union", value: "O(α(n))" },
       { label: "m operations", value: "O(m α(n))", note: "effectively linear" },
       { label: "Space", value: "O(n)" },
     ],
-    why: "Path compression flattens trees during lookups and union by size keeps them shallow. Together they give an amortised inverse-Ackermann bound — for every input that fits in memory, that constant is at most four.",
+    why: "Flattening paths during lookups and always hanging the smaller tree under the bigger keeps the trees very shallow. In practice Find takes a handful of steps for any input that fits in memory.",
     variations: [
       { name: "Weighted DSU", detail: "Store an offset to the parent for problems about relative values or ratios." },
       { name: "DSU with rollback", detail: "Skip path compression and keep a change log to undo unions — needed for offline dynamic connectivity." },
       { name: "Bipartite DSU", detail: "Double the universe: node u and 'not u' — union enforces opposite sides." },
-      { name: "DSU on time", detail: "Sort edges by weight and union incrementally for bottleneck path queries." },
+      { name: "Add edges in weight order", detail: "Sort the edges by weight and join them one at a time for bottleneck questions." },
     ],
     mistakes: [
-      { title: "Forgetting path compression", detail: "Without it, Find degrades to O(n) on adversarial input." },
+      { title: "Forgetting path compression", detail: "Without it, Find can walk a long chain and slow everything down." },
       { title: "Comparing parent[a] == parent[b]", detail: "Compare roots, via Find, not immediate parents." },
       { title: "Uniting by index rather than by root", detail: "parent[b] = a instead of parent[rb] = ra breaks the structure." },
       { title: "Expecting to split a set", detail: "DSU merges only. Undoing requires rollback or an offline approach." },
@@ -1070,9 +1061,9 @@ func (d *MapDSU) Union(a, b string) {
     typicalQuestion: "Find all strongly connected components of a directed graph.",
     mentalModel: {
       lines: [
-        "Kosaraju: DFS to get finish times, then DFS the reversed graph in that order.",
-        "Tarjan: one DFS with disc/low values and a stack — components pop when low[u] == disc[u].",
-        "Contracting each SCC gives a DAG, which you can then topologically sort.",
+        "A strong component is a group where everyone can reach everyone.",
+        "Tarjan finds them in one DFS, using entry times and a stack.",
+        "Squash each group into a single node and the graph becomes a DAG.",
       ],
       diagram: `  a ⇄ b     c ⇄ d
       ↓         ↑
@@ -1080,23 +1071,24 @@ func (d *MapDSU) Union(a, b string) {
 
   SCC1 {a,b}  SCC2 {c,d}
   condensation: SCC1 → SCC2  (a DAG)`,
-      key: "Every directed graph is a DAG of its strongly connected components.",
+      key: "Every directed graph is a DAG of its strong components.",
     },
     templates: [
       {
         name: "Tarjan SCC",
         filename: "tarjan.go",
-        note: "One pass. low[u] == disc[u] marks the root of a component.",
-        code: `func tarjanSCC(n int, adj [][]int) [][]int {
+        note: "One pass. low[u] == disc[u] means u is the top of a component.",
+        code: `// disc[u] = when we first saw u. low[u] = the earliest node u can still reach.
+func tarjanSCC(n int, adj [][]int) [][]int {
     disc := make([]int, n)
     low := make([]int, n)
     onStack := make([]bool, n)
     for i := range disc {
         disc[i] = -1
     }
-    stack := []int{}
-    timer := 0
+    var stack []int
     var comps [][]int
+    timer := 0
 
     var dfs func(int)
     dfs = func(u int) {
@@ -1110,11 +1102,11 @@ func (d *MapDSU) Union(a, b string) {
                 dfs(v)
                 low[u] = min(low[u], low[v])
             } else if onStack[v] {
-                low[u] = min(low[u], disc[v])
+                low[u] = min(low[u], disc[v]) // edge back into this group
             }
         }
 
-        if low[u] == disc[u] { // root of an SCC
+        if low[u] == disc[u] { // u is the top of a component
             var comp []int
             for {
                 w := stack[len(stack)-1]
@@ -1140,24 +1132,25 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "Kosaraju",
         filename: "kosaraju.go",
-        note: "Two passes, easier to remember, needs the reversed graph.",
-        code: `func kosaraju(n int, adj, radj [][]int) []int {
+        note: "Two passes, easier to remember, but it needs the reversed graph.",
+        code: `// two passes: finish times on the graph, then components on the reversed graph
+func kosaraju(n int, adj, radj [][]int) []int {
     seen := make([]bool, n)
     order := make([]int, 0, n)
 
-    var dfs1 func(int)
-    dfs1 = func(u int) {
+    var mark func(int)
+    mark = func(u int) {
         seen[u] = true
         for _, v := range adj[u] {
             if !seen[v] {
-                dfs1(v)
+                mark(v)
             }
         }
-        order = append(order, u) // finish time
+        order = append(order, u) // finished
     }
     for u := 0; u < n; u++ {
         if !seen[u] {
-            dfs1(u)
+            mark(u)
         }
     }
 
@@ -1165,20 +1158,20 @@ func (d *MapDSU) Union(a, b string) {
     for i := range comp {
         comp[i] = -1
     }
-    var dfs2 func(u, id int)
-    dfs2 = func(u, id int) {
+    var collect func(u, id int)
+    collect = func(u, id int) {
         comp[u] = id
         for _, v := range radj[u] {
             if comp[v] == -1 {
-                dfs2(v, id)
+                collect(v, id)
             }
         }
     }
 
     id := 0
-    for i := len(order) - 1; i >= 0; i-- {
+    for i := n - 1; i >= 0; i-- { // latest finish time first
         if u := order[i]; comp[u] == -1 {
-            dfs2(u, id)
+            collect(u, id)
             id++
         }
     }
@@ -1220,9 +1213,9 @@ func (d *MapDSU) Union(a, b string) {
     typicalQuestion: "What is the minimum cost to connect all the points?",
     mentalModel: {
       lines: [
-        "Kruskal: sort edges by weight and add any that does not create a cycle.",
-        "Prim: grow one tree, always taking the cheapest edge that leaves it.",
-        "Both rest on the cut property: the lightest edge across any cut is safe.",
+        "Kruskal: sort the edges and take any that does not close a loop.",
+        "Prim: grow one tree, always taking the cheapest edge leaving it.",
+        "Both rely on the same fact: the cheapest edge crossing any split is safe.",
       ],
       diagram: `  edges sorted: 1, 2, 2, 3, 5, 7
 
@@ -1230,13 +1223,13 @@ func (d *MapDSU) Union(a, b string) {
   take 3 ✓   … until V−1 edges
 
   DSU answers "would this create a cycle?"`,
-      key: "Kruskal for sparse edge lists; Prim for dense or implicit complete graphs.",
+      key: "Kruskal for a list of edges. Prim when the graph is dense or made up on the fly.",
     },
     templates: [
       {
         name: "Kruskal",
         filename: "kruskal.go",
-        note: "Sort plus DSU. Stop as soon as V-1 edges are taken.",
+        note: "Sort plus Union-Find. Stop the moment you have V-1 edges.",
         code: `func kruskal(n int, edges [][]int) (cost int, ok bool) {
     sort.Slice(edges, func(i, j int) bool { return edges[i][2] < edges[j][2] })
     dsu := NewDSU(n)
@@ -1257,7 +1250,7 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "Prim (dense)",
         filename: "prim_dense.go",
-        note: "O(n²) with no heap — the right choice for a complete graph like problem 1584.",
+        note: "O(n^2) with no heap, which is right for a complete graph.",
         code: `func minCostConnectPoints(points [][]int) int {
     n := len(points)
     minEdge := make([]int, n)
@@ -1292,7 +1285,7 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "Prim (heap)",
         filename: "prim_heap.go",
-        note: "For sparse graphs: lazy deletion by skipping nodes already in the tree.",
+        note: "For sparse graphs. Skip nodes already in the tree when they pop.",
         code: `func primHeap(n int, adj [][]Edge) int {
     inTree := make([]bool, n)
     pq := &PQ{{Node: 0, Dist: 0}}
@@ -1324,7 +1317,7 @@ func (d *MapDSU) Union(a, b string) {
       { label: "Prim (dense)", value: "O(V²)", note: "better when E ≈ V²" },
       { label: "Space", value: "O(V + E)" },
     ],
-    why: "The cut property: for any partition of the vertices, the minimum-weight edge crossing it belongs to some MST. Kruskal applies it globally by weight order; Prim applies it to the cut between the growing tree and everything else.",
+    why: "Split the nodes into any two groups. The cheapest edge crossing that split belongs to some minimum tree. Kruskal uses this by weight order; Prim uses it on the split between the tree so far and everything else.",
     variations: [
       { name: "Maximum spanning tree", detail: "Sort descending — everything else is identical." },
       { name: "Bottleneck path", detail: "The MST path between two nodes minimises the maximum edge, which is why MSTs solve minimum-effort problems." },
@@ -1355,22 +1348,22 @@ func (d *MapDSU) Union(a, b string) {
     typicalQuestion: "Can these people be split into two groups so that nobody dislikes someone in their group?",
     mentalModel: {
       lines: [
-        "Colour a start node, then colour every neighbour the opposite colour.",
-        "A conflict — an edge joining two same-coloured nodes — means an odd cycle.",
-        "Run it from every unvisited node: the graph may be disconnected.",
+        "Colour a node, then colour all its neighbours the other colour.",
+        "If two neighbours ever end up the same colour, it cannot be done.",
+        "Start again from every node you have not reached.",
       ],
       diagram: `  ●───○───●       ok (alternating)
 
   ●───○
   │   │
   └─●─┘           odd cycle → not bipartite`,
-      key: "Bipartite ⟺ no odd cycle. Two-colouring is the constructive proof.",
+      key: "Two colours work exactly when the graph has no odd-length loop.",
     },
     templates: [
       {
         name: "BFS two-colour",
         filename: "bipartite_bfs.go",
-        note: "colour: 0 unvisited, 1 and -1 the two sides.",
+        note: "0 means unvisited, 1 and -1 are the two sides.",
         code: `func isBipartite(graph [][]int) bool {
     colour := make([]int, len(graph))
 
@@ -1401,7 +1394,7 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "DSU variant",
         filename: "bipartite_dsu.go",
-        note: "Union each node's neighbours together; if a node shares a set with its neighbour, it fails.",
+        note: "Join each node's enemies together. If a node joins its own enemy, it fails.",
         code: `func possibleBipartition(n int, dislikes [][]int) bool {
     adj := make([][]int, n+1)
     for _, d := range dislikes {
@@ -1456,21 +1449,22 @@ func (d *MapDSU) Union(a, b string) {
     typicalQuestion: "What is the cheapest route from src to dst with at most k stops?",
     mentalModel: {
       lines: [
-        "Every shortest-path algorithm is relaxation: if dist[u] + w < dist[v], improve dist[v].",
-        "They differ only in the order relaxations happen.",
-        "Dijkstra needs non-negative weights so that a settled node is final.",
+        "All four algorithms do the same thing: if a shorter way shows up, take it.",
+        "They differ only in what order they try things.",
+        "Same costs: BFS. Costs >= 0: Dijkstra. Negatives or a hop limit: Bellman-Ford.",
+        "Every pair and a small graph: Floyd-Warshall.",
       ],
       diagram: `  weights all equal    → BFS          O(V+E)
   weights >= 0         → Dijkstra     O(E log V)
   negative / k hops    → Bellman-Ford O(V·E)
   all pairs, n <= 400  → Floyd        O(V³)`,
-      key: "Read the weights before choosing. That decision is the whole problem.",
+      key: "Read the weights before you choose. That decision is the whole problem.",
     },
     templates: [
       {
         name: "Bellman-Ford",
         filename: "bellman_ford.go",
-        note: "V-1 rounds. A further improvement on round V means a negative cycle.",
+        note: "V-1 rounds. Another improvement on round V means a negative loop.",
         code: `func bellmanFord(n int, edges [][]int, src int) ([]int, bool) {
     dist := make([]int, n)
     for i := range dist {
@@ -1503,7 +1497,7 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "Bounded hops",
         filename: "k_stops.go",
-        note: "Relax from a SNAPSHOT of the previous round, or one edge leaks two hops.",
+        note: "Relax from a copy of the previous round, or one edge sneaks two hops.",
         code: `func findCheapestPrice(n int, flights [][]int, src, dst, k int) int {
     dist := make([]int, n)
     for i := range dist {
@@ -1530,7 +1524,7 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "Floyd-Warshall",
         filename: "floyd.go",
-        note: "k must be the OUTERMOST loop — it is the set of allowed intermediates.",
+        note: "k must be the OUTER loop. It is the set of allowed stopovers.",
         code: `func floydWarshall(dist [][]int) {
     n := len(dist)
     for k := 0; k < n; k++ { // intermediate node
@@ -1558,7 +1552,7 @@ func (d *MapDSU) Union(a, b string) {
       { name: "Layered state", detail: "A hop or fuel limit becomes an extra dimension: dist[node][hops]." },
     ],
     mistakes: [
-      { title: "Using Dijkstra with negative weights", detail: "A settled node may later be improved — the core invariant fails." },
+      { title: "Using Dijkstra with negative weights", detail: "A node you already finished could still get cheaper, and Dijkstra never looks again." },
       { title: "Relaxing in place with a hop limit", detail: "Without the snapshot, one round can traverse several edges." },
       { title: "Wrong loop order in Floyd-Warshall", detail: "k must be outermost; any other order silently computes the wrong answer." },
       { title: "Overflow with MaxInt sentinels", detail: "Guard with a check before adding a weight to a sentinel." },
@@ -1575,29 +1569,29 @@ func (d *MapDSU) Union(a, b string) {
     usedFor: ["weighted shortest paths", "minimum effort or cost", "bottleneck paths", "maximum probability"],
     signals: ["weighted graph", "minimum cost path", "shortest time", "non-negative", "network delay", "minimum effort"],
     recognition: [
-      "edges have different non-negative costs",
-      "you need the cheapest route, not the fewest hops",
-      "the objective can be made monotone along a path (sum, max, product of probabilities)",
+      "the edges cost different amounts, and none of them is negative",
+      "you want the cheapest route, not the fewest hops",
+      "the cost of a path only ever grows as you extend it",
     ],
     typicalQuestion: "How long until every node receives the signal?",
     mentalModel: {
       lines: [
-        "Keep a frontier in a min-heap keyed by tentative distance.",
-        "Pop the closest node — because weights are non-negative, that distance is final.",
-        "Relax its edges and push improvements.",
+        "Keep the frontier in a min-heap, ordered by distance so far.",
+        "Pop the closest node. Since no edge is negative, that distance is final.",
+        "Relax its edges and push the improvements.",
       ],
       diagram: `  heap: (0,s) (4,a) (7,b)
 
   pop (0,s) → settle s, relax edges
   pop (4,a) → settle a  ← cannot improve later
                           because all weights >= 0`,
-      key: "Skip stale heap entries with an if d > dist[u] guard instead of trying to decrease keys.",
+      key: "Skip stale heap entries with a simple 'if this is worse than what I have, continue'.",
     },
     templates: [
       {
         name: "Dijkstra",
         filename: "dijkstra.go",
-        note: "Lazy deletion: push duplicates and skip outdated pops.",
+        note: "Push duplicates and skip the out-of-date ones when they pop.",
         code: `func dijkstra(n int, adj [][]Edge, src int) []int {
     dist := make([]int, n)
     for i := range dist {
@@ -1626,8 +1620,9 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "Minimise the maximum",
         filename: "min_effort.go",
-        note: "Swap sum for max in the relaxation and Dijkstra solves bottleneck paths.",
-        code: `func minimumEffortPath(h [][]int) int {
+        note: "Swap the sum for a max and Dijkstra finds the gentlest path.",
+        code: `// cost of a path is its largest step, not the sum of its steps
+func minimumEffortPath(h [][]int) int {
     rows, cols := len(h), len(h[0])
     effort := make([][]int, rows)
     for i := range effort {
@@ -1643,19 +1638,18 @@ func (d *MapDSU) Union(a, b string) {
 
     for pq.Len() > 0 {
         c := heap.Pop(pq).(Cell)
-        if c.Cost > effort[c.R][c.C] {
-            continue
-        }
         if c.R == rows-1 && c.C == cols-1 {
             return c.Cost
+        }
+        if c.Cost > effort[c.R][c.C] {
+            continue // stale entry
         }
         for _, d := range dirs {
             nr, nc := c.R+d[0], c.C+d[1]
             if nr < 0 || nr >= rows || nc < 0 || nc >= cols {
                 continue
             }
-            // path cost is the largest step, not the sum
-            step := max(c.Cost, abs(h[nr][nc]-h[c.R][c.C]))
+            step := max(c.Cost, abs(h[nr][nc]-h[c.R][c.C])) // max, not +
             if step < effort[nr][nc] {
                 effort[nr][nc] = step
                 heap.Push(pq, Cell{nr, nc, step})
@@ -1668,7 +1662,7 @@ func (d *MapDSU) Union(a, b string) {
       {
         name: "With a state dimension",
         filename: "dijkstra_state.go",
-        note: "When a constraint like remaining stops matters, make it part of the node.",
+        note: "When something like 'stops left' matters, make it part of the node.",
         code: `// dist[node][usedStops]
 func dijkstraLayered(n, maxStops int, adj [][]Edge, src, dst int) int {
     dist := make([][]int, n)
@@ -1704,10 +1698,10 @@ func dijkstraLayered(n, maxStops int, adj [][]Edge, src, dst int) int {
     ],
     complexity: [
       { label: "Time", value: "O(E log V)", note: "binary heap" },
-      { label: "With a Fibonacci heap", value: "O(E + V log V)", note: "theoretical; not worth implementing" },
+      { label: "With a Fibonacci heap", value: "O(E + V log V)", note: "theory only; not worth writing" },
       { label: "Space", value: "O(V + E)" },
     ],
-    why: "When every weight is non-negative, the smallest tentative distance in the frontier cannot be improved by any longer route — extending any path only adds cost. That makes popping the minimum a safe, permanent decision, which is exactly the greedy-choice property.",
+    why: "With no negative edges, the smallest distance in the frontier can never be improved later, because going further only adds cost. That makes popping the minimum a decision you never have to revisit.",
     variations: [
       { name: "Bottleneck (minimax) paths", detail: "Relax with max instead of sum." },
       { name: "Maximum probability", detail: "Multiply probabilities and use a max-heap." },
@@ -1739,9 +1733,9 @@ func dijkstraLayered(n, maxStops int, adj [][]Edge, src, dst int) int {
     typicalQuestion: "How many minutes until every orange is rotten?",
     mentalModel: {
       lines: [
-        "Imagine a virtual node connected to every source with a zero-cost edge.",
-        "One BFS from that node gives every cell the distance to its nearest source.",
-        "In code: push all sources before the loop starts.",
+        "Put every starting point in the queue before the loop begins.",
+        "Then run an ordinary BFS.",
+        "Each cell's ring number is its distance to the nearest source.",
       ],
       diagram: `  sources ●   ●        ●
 
@@ -1750,13 +1744,13 @@ func dijkstraLayered(n, maxStops int, adj [][]Edge, src, dst int) int {
   level 2 ...
 
   one queue, one pass`,
-      key: "Push every source first, then run an ordinary BFS.",
+      key: "One search from all sources at once, not one search per source.",
     },
     templates: [
       {
         name: "Multi-source",
         filename: "multi_source.go",
-        note: "The only difference from a normal BFS is the seeding loop.",
+        note: "The only difference from a normal BFS is the loop that seeds the queue.",
         code: `func nearestDistance(grid [][]int) [][]int {
     rows, cols := len(grid), len(grid[0])
     dist := make([][]int, rows)
@@ -1794,31 +1788,25 @@ func dijkstraLayered(n, maxStops int, adj [][]Edge, src, dst int) int {
       {
         name: "Rounds until done",
         filename: "rotting_oranges.go",
-        note: "Count levels, then verify nothing was left unreachable.",
+        note: "Count rings, then check nothing was left behind.",
         code: `func orangesRotting(grid [][]int) int {
-    queue := [][2]int{}
+    var queue [][2]int
     fresh := 0
 
     for r := range grid {
         for c := range grid[r] {
-            switch grid[r][c] {
-            case 2:
+            if grid[r][c] == 2 {
                 queue = append(queue, [2]int{r, c})
-            case 1:
+            } else if grid[r][c] == 1 {
                 fresh++
             }
         }
     }
-    if fresh == 0 {
-        return 0
-    }
 
     minutes := 0
     for len(queue) > 0 && fresh > 0 {
-        size := len(queue)
-        for i := 0; i < size; i++ {
-            cur := queue[0]
-            queue = queue[1:]
+        var next [][2]int
+        for _, cur := range queue {
             for _, d := range dirs {
                 nr, nc := cur[0]+d[0], cur[1]+d[1]
                 if nr < 0 || nr >= len(grid) || nc < 0 || nc >= len(grid[0]) {
@@ -1829,14 +1817,15 @@ func dijkstraLayered(n, maxStops int, adj [][]Edge, src, dst int) int {
                 }
                 grid[nr][nc] = 2
                 fresh--
-                queue = append(queue, [2]int{nr, nc})
+                next = append(next, [2]int{nr, nc})
             }
         }
+        queue = next
         minutes++
     }
 
     if fresh > 0 {
-        return -1 // unreachable cells remain
+        return -1 // some were never reached
     }
     return minutes
 }`,
@@ -1844,7 +1833,7 @@ func dijkstraLayered(n, maxStops int, adj [][]Edge, src, dst int) int {
       {
         name: "Reverse the search",
         filename: "reverse_bfs.go",
-        note: "Search from the destinations instead of the sources — Pacific Atlantic, surrounded regions.",
+        note: "Many starts, one target? Search backwards from the target instead.",
         code: `// which cells can reach the border? search inward FROM the border
 func reachableFromBorder(heights [][]int) [][]bool {
     rows, cols := len(heights), len(heights[0])
@@ -1887,7 +1876,7 @@ func reachableFromBorder(heights [][]int) [][]bool {
       { label: "Grid", value: "O(rows · cols)" },
       { label: "Space", value: "O(V)" },
     ],
-    why: "Adding a virtual super-source with zero-weight edges to every real source turns k searches into one. BFS from that node visits each real source at level 0, so every other node's level is its distance to the nearest source.",
+    why: "Imagine one invisible node joined to every source at no cost. A single BFS from it reaches all the real sources at step 0, so every other node's ring number is its distance to the closest one.",
     variations: [
       { name: "Multi-source Dijkstra", detail: "Same idea with weights: push every source into the heap at distance 0." },
       { name: "Reverse search", detail: "When many starts share one target, search backwards from the target instead." },

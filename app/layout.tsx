@@ -1,18 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import { categories } from "@/data/categories";
 import { patterns } from "@/data/patterns";
 import { Shell } from "@/components/shell";
 import "./globals.css";
 
-const sans = Geist({
-  variable: "--font-geist",
+const sans = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
 });
 
-const mono = JetBrains_Mono({
-  variable: "--font-mono-jb",
+const mono = IBM_Plex_Mono({
+  variable: "--font-code",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
   display: "swap",
 });

@@ -17,9 +17,9 @@ export const advanced: Pattern[] = [
     typicalQuestion: "Count how many pairs are inverted in this array.",
     mentalModel: {
       lines: [
-        "Divide into halves, recurse, then combine.",
-        "The combine step is where the insight lives — merging, counting across the split, choosing a side.",
-        "T(n) = 2T(n/2) + O(n) gives O(n log n).",
+        "Cut the problem in half, solve both halves, then put them back together.",
+        "The real work is almost always in the putting-back-together step.",
+        "Halving plus a linear merge gives O(n log n).",
       ],
       diagram: `           [ n ]
           /     \\
@@ -29,7 +29,7 @@ export const advanced: Pattern[] = [
 
   combine cost O(n) per level
   log n levels → O(n log n)`,
-      key: "Ask what can only be computed across the split. That is the combine step.",
+      key: "Ask what can only be worked out across the cut. That is your merge step.",
     },
     templates: [
       {
@@ -67,7 +67,7 @@ export const advanced: Pattern[] = [
       {
         name: "Quickselect",
         filename: "quickselect.go",
-        note: "O(n) average for the k-th element — recurse into one side only.",
+        note: "O(n) on average for the k-th element: only recurse into one side.",
         code: `func quickSelect(a []int, k int) int { // k is 0-indexed
     lo, hi := 0, len(a)-1
     for {
@@ -105,7 +105,7 @@ func partition(a []int, lo, hi int) int {
       {
         name: "Split on operators",
         filename: "different_ways.go",
-        note: "Every operator is a possible root of the expression tree.",
+        note: "Every operator can be the last one applied.",
         code: `func diffWaysToCompute(expr string) []int {
     var out []int
 
@@ -141,7 +141,7 @@ func partition(a []int, lo, hi int) int {
     ],
     complexity: [
       { label: "Merge sort", value: "O(n log n)" },
-      { label: "Quickselect", value: "O(n)", note: "average; O(n²) worst case without randomisation" },
+      { label: "Quickselect", value: "O(n)", note: "average; O(n²) without a random pivot" },
       { label: "Master theorem", value: "T(n)=aT(n/b)+f(n)", note: "compare f(n) with n^(log_b a)" },
       { label: "Space", value: "O(n)", note: "O(log n) for in-place variants" },
     ],
@@ -176,9 +176,9 @@ func partition(a []int, lo, hi int) int {
     typicalQuestion: "Find the subset sum closest to a goal, with n up to 40.",
     mentalModel: {
       lines: [
-        "2^40 is a trillion; 2^20 is a million.",
-        "Enumerate every subset of each half separately.",
-        "Sort one side, then binary search it for each element of the other.",
+        "2^40 is far too many. 2^20 is about a million.",
+        "So split the items into two halves and list every subset of each.",
+        "Sort one side, then binary search it for each result from the other.",
       ],
       diagram: `  n = 40
 
@@ -189,13 +189,13 @@ func partition(a []int, lo, hi int) int {
       binary search left for goal − r
 
   2^20 · 20 ≈ 2·10^7`,
-      key: "n around 40 with subsets is the signature. Look for it explicitly.",
+      key: "n around 40 with subsets is the signature. Look for it directly.",
     },
     templates: [
       {
         name: "Enumerate subsets",
         filename: "subset_sums.go",
-        note: "2^k sums from k items, built by bit iteration.",
+        note: "2^k totals from k items, built by walking the bit patterns.",
         code: `func subsetSums(a []int) []int {
     n := len(a)
     out := make([]int, 0, 1<<n)
@@ -215,7 +215,7 @@ func partition(a []int, lo, hi int) int {
       {
         name: "Closest sum",
         filename: "closest_subset_sum.go",
-        note: "Sort the left half once, then one binary search per right-half sum.",
+        note: "Sort the left half once, then one binary search per right-half total.",
         code: `func minAbsDifference(nums []int, goal int) int {
     mid := len(nums) / 2
     left := subsetSums(nums[:mid])
@@ -240,7 +240,7 @@ func partition(a []int, lo, hi int) int {
       {
         name: "Group by size",
         filename: "split_by_size.go",
-        note: "When the combination rule depends on how many items each half contributed.",
+        note: "For when the rule depends on how many items each half contributed.",
         code: `func sumsBySize(a []int) map[int][]int {
     n := len(a)
     bySize := map[int][]int{}
@@ -264,7 +264,7 @@ func partition(a []int, lo, hi int) int {
       { label: "Combine", value: "O(2^(n/2) · n/2)", note: "sort plus binary search" },
       { label: "Space", value: "O(2^(n/2))" },
     ],
-    why: "Splitting turns 2^n into two independent 2^(n/2) enumerations. Since 2^(n/2) is the square root of 2^n, n = 40 goes from 10^12 to about 10^6 — the difference between impossible and instant.",
+    why: "Splitting turns 2^n into two runs of 2^(n/2), which is the square root of the original. For n = 40 that is the difference between a trillion and a million.",
     variations: [
       { name: "Bidirectional BFS", detail: "The same halving applied to search depth: two frontiers meeting in the middle." },
       { name: "Hash instead of sort", detail: "For exact-match targets, a hash set of one half gives O(1) lookups." },
@@ -287,16 +287,17 @@ func partition(a []int, lo, hi int) int {
     usedFor: ["shuffling", "weighted picks", "randomised pivots", "Monte Carlo checks"],
     signals: ["shuffle", "random pick", "uniformly at random", "pick with weight", "expected O(n)", "avoid worst case"],
     recognition: [
-      "an adversarial input would destroy your deterministic algorithm",
-      "you must sample uniformly from a set or distribution",
-      "an expected-time guarantee is acceptable in place of a worst-case one",
+      "a badly chosen input could make your normal approach very slow",
+      "you need to pick fairly from a set or a weighted list",
+      "an average-case guarantee is good enough here",
     ],
     typicalQuestion: "Shuffle an array so that every permutation is equally likely.",
     mentalModel: {
       lines: [
-        "Fisher-Yates: for each i, swap with a uniform j in [i, n).",
-        "Rejection sampling: over-generate, discard out-of-range draws, retry.",
-        "Weighted picks: a prefix-sum array plus one binary search.",
+        "Randomness protects you from the worst case.",
+        "Fisher-Yates: at each position, swap with a random spot at or after it.",
+        "Rejection sampling: over-generate, throw away what is out of range, try again.",
+        "Weighted picks: running totals plus one binary search.",
       ],
       diagram: `  Fisher–Yates
 
@@ -304,13 +305,13 @@ func partition(a []int, lo, hi int) int {
   i = 1: swap with any of n−1
   ...
   each permutation has probability 1/n!`,
-      key: "Pick j from [i, n), never from [0, n) — the latter is biased.",
+      key: "Pick the swap partner from [i, n), never from [0, n). The second one is biased.",
     },
     templates: [
       {
         name: "Fisher-Yates",
         filename: "shuffle.go",
-        note: "The range must start at i. Starting at 0 produces a non-uniform shuffle.",
+        note: "The range must start at i. Starting at 0 makes some orders more likely.",
         code: `func shuffle(a []int) {
     for i := len(a) - 1; i > 0; i-- {
         j := rand.Intn(i + 1) // uniform in [0, i]
@@ -324,7 +325,7 @@ rand.Shuffle(len(a), func(i, j int) { a[i], a[j] = a[j], a[i] })`,
       {
         name: "Weighted pick",
         filename: "weighted_pick.go",
-        note: "Prefix sums plus an upper bound over a uniform draw.",
+        note: "Running totals, then look up where a uniform draw lands.",
         code: `type WeightedPicker struct{ prefix []int }
 
 func NewWeightedPicker(w []int) *WeightedPicker {
@@ -345,7 +346,7 @@ func (p *WeightedPicker) Pick() int {
       {
         name: "Rejection sampling",
         filename: "rand10.go",
-        note: "Expected 2.2 calls per result. Discarding is what keeps it uniform.",
+        note: "About 2.2 calls per result. Throwing away is what keeps it fair.",
         code: `func rand10() int {
     for {
         row := rand7() - 1 // 0..6
@@ -362,7 +363,7 @@ func (p *WeightedPicker) Pick() int {
       {
         name: "Randomised pivot",
         filename: "random_pivot.go",
-        note: "One line that turns quicksort's worst case from likely into vanishingly rare.",
+        note: "One line that turns quicksort's worst case from likely into rare.",
         code: `func partitionRandom(a []int, lo, hi int) int {
     r := lo + rand.Intn(hi-lo+1)
     a[r], a[hi] = a[hi], a[r] // random element becomes the pivot
@@ -380,7 +381,7 @@ func (p *WeightedPicker) Pick() int {
       { name: "Reservoir sampling", detail: "Sampling from a stream of unknown length." },
       { name: "Alias method", detail: "O(1) weighted sampling after O(n) preprocessing." },
       { name: "Monte Carlo versus Las Vegas", detail: "Monte Carlo is always fast and sometimes wrong; Las Vegas is always right and sometimes slow." },
-      { name: "Randomised hashing", detail: "A random seed defeats adversarial hash collisions." },
+      { name: "Random hash seed", detail: "A random seed stops anyone from engineering collisions against you." },
     ],
     mistakes: [
       { title: "Swapping with a fully random index", detail: "rand.Intn(n) instead of rand.Intn(i+1) makes some permutations more likely." },
@@ -407,9 +408,9 @@ func (p *WeightedPicker) Pick() int {
     typicalQuestion: "Return a random node from a linked list of unknown length, in O(1) space.",
     mentalModel: {
       lines: [
-        "Keep the i-th item with probability 1/i, replacing whatever you held.",
-        "By induction, after n items every item is held with probability 1/n.",
-        "For k items: keep the i-th with probability k/i, evicting a random slot.",
+        "Keep the item you are looking at with probability 1 in i.",
+        "Otherwise keep whatever you already had.",
+        "After n items, every one of them is equally likely to be the survivor.",
       ],
       diagram: `  item 1: keep (prob 1/1)
   item 2: replace with prob 1/2
@@ -417,13 +418,13 @@ func (p *WeightedPicker) Pick() int {
   ...
 
   P(item j survives) = 1/j · j/(j+1) · … = 1/n`,
-      key: "The proof is a telescoping product: keeping it, times never being replaced afterwards.",
+      key: "One variable, one pass, and you never need to know the length.",
     },
     templates: [
       {
         name: "Single sample",
         filename: "reservoir_one.go",
-        note: "One variable, one pass, no knowledge of the length.",
+        note: "One variable, one pass, no idea how long the stream is.",
         code: `func randomNode(head *ListNode) int {
     result, i := 0, 0
 
@@ -439,7 +440,7 @@ func (p *WeightedPicker) Pick() int {
       {
         name: "k samples",
         filename: "reservoir_k.go",
-        note: "Fill the reservoir, then replace a random slot with probability k/i.",
+        note: "Fill the reservoir first, then swap out a random slot with chance k/i.",
         code: `func reservoirK(stream []int, k int) []int {
     res := make([]int, 0, k)
 
@@ -458,7 +459,7 @@ func (p *WeightedPicker) Pick() int {
       {
         name: "Random matching index",
         filename: "random_pick_index.go",
-        note: "A reservoir of size 1 over only the matching positions.",
+        note: "A reservoir of size one, over only the positions that match.",
         code: `func (s *Solution) Pick(target int) int {
     result, count := -1, 0
 
@@ -480,7 +481,7 @@ func (p *WeightedPicker) Pick() int {
       { label: "Space", value: "O(k)", note: "O(1) for a single sample" },
       { label: "Preprocessing", value: "none", note: "the point of the technique" },
     ],
-    why: "Item j is kept when it arrives with probability 1/j, and then survives items j+1..n with probability (j/(j+1))·((j+1)/(j+2))·…·((n-1)/n) = j/n. Multiplying gives 1/n for every item.",
+    why: "Item j is kept when it arrives with chance 1/j, then has to survive everything after it. Multiply those chances together and they cancel down to exactly 1/n for every item.",
     variations: [
       { name: "Weighted reservoir", detail: "A-Res: key each item as u^(1/w) with u uniform, and keep the k largest keys." },
       { name: "Distributed sampling", detail: "Reservoirs merge, which makes the technique natural for parallel streams." },
@@ -510,9 +511,10 @@ func (p *WeightedPicker) Pick() int {
     typicalQuestion: "Find the longest substring that appears at least twice.",
     mentalModel: {
       lines: [
-        "Treat the string as a number in base B modulo a large prime.",
-        "Equal hashes usually mean equal content; different hashes always mean different content.",
-        "Randomise B so no fixed adversarial input can force collisions.",
+        "Turn a stretch of text into one number.",
+        "Same number nearly always means same text.",
+        "Different number always means different text.",
+        "Pick the multiplier at random so no prepared input can trip you up.",
       ],
       diagram: `  h("abc") = a·B² + b·B + c  (mod M)
 
@@ -520,13 +522,13 @@ func (p *WeightedPicker) Pick() int {
   h(i..j) = H[j+1] − H[i]·B^(j−i+1)
 
   all mod M`,
-      key: "Randomise the base and use a 64-bit modulus, or a prepared test case will break you.",
+      key: "Use a big modulus and a random base, or verify the match before you trust it.",
     },
     templates: [
       {
         name: "Prefix hash",
         filename: "string_hash.go",
-        note: "O(1) substring hashes after O(n) preprocessing.",
+        note: "O(1) for any substring, after one pass to set it up.",
         code: `type StrHash struct {
     h    []uint64
     pow  []uint64
@@ -563,7 +565,7 @@ func (sh *StrHash) Range(l, r int) uint64 {
       {
         name: "Rolling window",
         filename: "rabin_karp.go",
-        note: "Add the entering character, subtract the leaving one times B^(k-1).",
+        note: "Add the new character, subtract the one that fell off.",
         code: `func rabinKarp(text, pattern string) int {
     n, m := len(text), len(pattern)
     if m > n {
@@ -596,7 +598,7 @@ func (sh *StrHash) Range(l, r int) uint64 {
       {
         name: "Subtree fingerprint",
         filename: "subtree_hash.go",
-        note: "Combine children's hashes with the node value to identify identical subtrees.",
+        note: "Mix the children's numbers with the node's own to identify shapes.",
         code: `func subtreeHashes(root *TreeNode) map[uint64]int {
     counts := map[uint64]int{}
 
@@ -653,9 +655,9 @@ func (sh *StrHash) Range(l, r int) uint64 {
     typicalQuestion: "Build the convex hull enclosing all the given points.",
     mentalModel: {
       lines: [
-        "The cross product of two vectors gives orientation and twice the triangle area.",
-        "cross > 0 means a left turn, < 0 a right turn, 0 collinear.",
-        "It needs no division, so it stays exact in integers.",
+        "The cross product tells you which way a turn goes.",
+        "Positive is left, negative is right, zero is straight.",
+        "It uses no division, so integers stay exact.",
       ],
       diagram: `  cross(O,A,B) =
       (A.x−O.x)(B.y−O.y) − (A.y−O.y)(B.x−O.x)
@@ -670,7 +672,7 @@ func (sh *StrHash) Range(l, r int) uint64 {
       {
         name: "Cross product",
         filename: "cross.go",
-        note: "The single most useful primitive in geometry problems.",
+        note: "The single most useful thing in any geometry problem.",
         code: `type Point struct{ X, Y int }
 
 // > 0 counter-clockwise, < 0 clockwise, 0 collinear
@@ -686,7 +688,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Convex hull",
         filename: "convex_hull.go",
-        note: "Monotone chain: sort, build the lower hull, then the upper.",
+        note: "Sort, build the bottom edge, then the top edge.",
         code: `func convexHull(pts []Point) []Point {
     if len(pts) < 3 {
         return pts
@@ -719,7 +721,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Slope without division",
         filename: "max_points_line.go",
-        note: "Normalise dy/dx by their gcd and fix the sign — never use floats.",
+        note: "Reduce dy and dx by their gcd and fix the sign. Never use floats.",
         code: `func maxPoints(points [][]int) int {
     if len(points) <= 2 {
         return len(points)
@@ -754,7 +756,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Polygon area",
         filename: "shoelace.go",
-        note: "The shoelace formula: sum the cross products around the boundary.",
+        note: "Walk the boundary adding cross products. That is the shoelace formula.",
         code: `func polygonArea2(pts []Point) int { // twice the area
     n := len(pts)
     sum := 0
@@ -773,7 +775,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       { label: "Closest pair", value: "O(n log n)", note: "divide and conquer" },
     ],
     variations: [
-      { name: "Graham scan", detail: "Sort by polar angle instead of by x — equivalent to the monotone chain." },
+      { name: "Graham scan", detail: "Sort by angle instead of by x. Same result as the chain method." },
       { name: "Keeping collinear points", detail: "Use < 0 instead of <= 0 in the hull test when boundary points must be retained." },
       { name: "Point in polygon", detail: "Ray casting, counting crossings; or a winding number for self-intersecting polygons." },
       { name: "Rotating calipers", detail: "Diameter and width of a convex polygon in linear time after the hull." },
@@ -803,22 +805,22 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
     typicalQuestion: "Find the first occurrence of a pattern in a text.",
     mentalModel: {
       lines: [
-        "lps[i] = the length of the longest proper prefix of p[0..i] that is also a suffix.",
-        "On a mismatch, jump the pattern pointer to lps[j-1] instead of restarting.",
-        "The text pointer only ever moves forward, so the whole scan is linear.",
+        "Work out, for each prefix, how much of it is also a suffix.",
+        "On a mismatch, slide the pattern to that overlap instead of starting over.",
+        "The pointer into the text never goes backwards, so one pass is enough.",
       ],
       diagram: `  p = a b a b c
   lps 0 0 1 2 0
 
   mismatch at j=4 → j = lps[3] = 2
   keep the "ab" already matched`,
-      key: "n - lps[n-1] is the smallest period of the string. That fact solves several problems on its own.",
+      key: "n - lps[n-1] is the shortest repeating block. That fact alone solves several problems.",
     },
     templates: [
       {
         name: "LPS array",
         filename: "lps.go",
-        note: "The whole algorithm is here; the search is the same loop against the text.",
+        note: "The whole idea lives here. Searching is the same loop against the text.",
         code: `func buildLPS(p string) []int {
     lps := make([]int, len(p))
     length := 0
@@ -841,7 +843,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Search",
         filename: "kmp_search.go",
-        note: "i never decreases — that is the linear-time guarantee.",
+        note: "i never goes backwards. That is what keeps it linear.",
         code: `func strStr(text, pattern string) int {
     if len(pattern) == 0 {
         return 0
@@ -866,7 +868,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Period detection",
         filename: "period.go",
-        note: "A string is a repetition iff its length is divisible by its smallest period.",
+        note: "A string repeats exactly when its length divides by its shortest block.",
         code: `func repeatedSubstringPattern(s string) bool {
     n := len(s)
     lps := buildLPS(s)
@@ -878,7 +880,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Longest palindromic prefix",
         filename: "shortest_palindrome.go",
-        note: "Run KMP on s + sentinel + reverse(s); the final LPS value is the answer.",
+        note: "Run KMP on s + '#' + reverse(s) and read the last value.",
         code: `func shortestPalindrome(s string) string {
     if len(s) == 0 {
         return s
@@ -899,7 +901,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       { label: "Total", value: "O(n + m)" },
       { label: "Space", value: "O(m)" },
     ],
-    why: "The fallback loop looks like it could be quadratic, but j increases by at most one per text character and each fallback strictly decreases it. So the total number of fallbacks across the scan is bounded by the number of increments — linear overall.",
+    why: "The fallback loop looks like it could be quadratic. It is not: the pattern pointer only ever goes up by one per character, and every fallback pushes it down. So the total number of fallbacks is capped by the number of steps forward.",
     variations: [
       { name: "All occurrences", detail: "After a match, set j = lps[j-1] and continue instead of returning." },
       { name: "Z-algorithm", detail: "A different linear-time primitive that many people find easier to reason about." },
@@ -930,9 +932,9 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
     typicalQuestion: "Find all occurrences of a pattern in a text in linear time.",
     mentalModel: {
       lines: [
-        "z[i] = the length of the longest substring starting at i that matches a prefix of s.",
-        "Maintain a window [l, r] — the rightmost prefix match found so far.",
-        "Inside that window, reuse the already-computed z value; only extend beyond r.",
+        "z[i] says how much of the string's own start is repeated at position i.",
+        "Remember the furthest match found so far.",
+        "Inside that stretch you already know the answer, so only extend past its edge.",
       ],
       diagram: `  s = a a b a a b
 
@@ -941,13 +943,13 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       "a"     "aab" matches the prefix
 
   window [l,r] = the rightmost match`,
-      key: "Concatenate pattern + sentinel + text; any z equal to the pattern length is a match.",
+      key: "Glue pattern + separator + text, and any z equal to the pattern length is a match.",
     },
     templates: [
       {
         name: "Z array",
         filename: "z_array.go",
-        note: "The window reuse is what keeps it linear.",
+        note: "Reusing what you already know inside the window is what keeps it linear.",
         code: `func zArray(s string) []int {
     n := len(s)
     z := make([]int, n)
@@ -971,7 +973,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Pattern matching",
         filename: "z_search.go",
-        note: "The sentinel must not appear in either string.",
+        note: "The separator must be a character that appears in neither string.",
         code: `func findAll(text, pattern string) []int {
     combined := pattern + "\x00" + text
     z := zArray(combined)
@@ -990,7 +992,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Borders from Z",
         filename: "z_borders.go",
-        note: "i + z[i] == n means the suffix at i is also a prefix — a border.",
+        note: "i + z[i] == n means the ending at i is also the beginning.",
         code: `func borders(s string) []int {
     n := len(s)
     z := zArray(s)
@@ -1039,9 +1041,9 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
     typicalQuestion: "Find the longest substring that occurs more than once.",
     mentalModel: {
       lines: [
-        "The window is a number in base B: shift left, add the new digit, subtract the old one.",
-        "Subtracting requires B^(k-1), which you precompute once.",
-        "Equal hashes should be verified when correctness matters.",
+        "Treat the window as a number written in some base.",
+        "Sliding one step: drop the old digit, shift, add the new one.",
+        "That is O(1) per step instead of rebuilding the whole thing.",
       ],
       diagram: `  window "abc" → "bcd"
 
@@ -1049,13 +1051,13 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
        └ remove   └ shift  └ add
 
   all arithmetic mod M`,
-      key: "Small alphabets can be packed exactly: 4 bases × 2 bits means no collisions at all.",
+      key: "A tiny alphabet packs into an integer exactly, with no collisions at all.",
     },
     templates: [
       {
         name: "Sliding hash",
         filename: "rolling.go",
-        note: "highPow = B^(k-1) is what lets you remove the outgoing character.",
+        note: "The precomputed power is what lets you remove the outgoing character.",
         code: `func windowHashes(s string, k int) []int {
     const base, mod = 256, 1_000_000_007
     if len(s) < k {
@@ -1084,7 +1086,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Exact packing",
         filename: "dna_pack.go",
-        note: "When the alphabet is tiny, pack bits — exact, collision-free, no modulus.",
+        note: "Four letters fit in two bits each, so the window is just an int.",
         code: `func findRepeatedDnaSequences(s string) []string {
     if len(s) < 10 {
         return nil
@@ -1111,7 +1113,7 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       {
         name: "Binary search + hash",
         filename: "longest_dup.go",
-        note: "The length is monotone: if a duplicate of length L exists, so does one of length L-1.",
+        note: "Longer duplicates imply shorter ones, so the length can be searched.",
         code: `func longestDupSubstring(s string) string {
     lo, hi := 1, len(s)-1
     best := ""
@@ -1150,14 +1152,14 @@ func dupOfLength(s string, k int) string {
     ],
     variations: [
       { name: "Double hashing", detail: "Two moduli make collisions effectively impossible without verification." },
-      { name: "Prefix hashing", detail: "Precompute prefixes for O(1) arbitrary substring hashes, not just a fixed window." },
+      { name: "Prefix hashing", detail: "Precompute prefixes to hash any substring in O(1), not just a fixed-width window." },
       { name: "2D rolling hash", detail: "Hash rows, then hash the row hashes, for submatrix matching." },
     ],
     mistakes: [
       { title: "Negative after the subtraction", detail: "Add the modulus before taking the remainder." },
       { title: "Recomputing B^(k-1) per step", detail: "Compute it once outside the loop." },
-      { title: "Skipping verification", detail: "With a single 32-bit modulus, collisions do occur on adversarial inputs." },
-      { title: "Using a fixed base", detail: "Randomise it when an adversarial test suite is plausible." },
+      { title: "Skipping verification", detail: "With one 32-bit modulus, two different strings really can collide. Compare them to be sure." },
+      { title: "Using a fixed base", detail: "Pick the multiplier at random if someone might have designed the tests against you." },
     ],
     related: ["randomized-hashing", "kmp", "fixed-sliding-window", "binary-search-on-answer"],
     problems: [187, 1044, 28, 1392, 214],
@@ -1178,9 +1180,10 @@ func dupOfLength(s string, k int) string {
     typicalQuestion: "Find the longest palindromic substring in linear time.",
     mentalModel: {
       lines: [
-        "Interleave with separators so every palindrome has an odd length.",
-        "Keep the rightmost palindrome found; inside it, mirror the known radius.",
-        "Only expand past the current right boundary — that is what bounds the total work.",
+        "Put a separator between every letter so every palindrome has an odd length.",
+        "Remember the palindrome that reaches furthest right.",
+        "Inside it, mirror what you already know instead of recomputing.",
+        "Only grow past its right edge.",
       ],
       diagram: `  "abba" → "^#a#b#b#a#$"
 
@@ -1189,13 +1192,13 @@ func dupOfLength(s string, k int) string {
   then expand only beyond r
 
   total expansion work is O(n)`,
-      key: "The transform makes even and odd palindromes uniform, removing all the case analysis.",
+      key: "The separators make odd and even palindromes behave the same way.",
     },
     templates: [
       {
         name: "Manacher",
         filename: "manacher.go",
-        note: "Sentinels at both ends remove every bounds check from the expansion loop.",
+        note: "Guards at both ends remove every bounds check from the growing loop.",
         code: `func manacher(s string) []int {
     // transform: ^#a#b#a#$  — sentinels avoid bounds checks
     t := make([]byte, 0, 2*len(s)+3)
@@ -1226,7 +1229,7 @@ func dupOfLength(s string, k int) string {
       {
         name: "Longest substring",
         filename: "longest_pal.go",
-        note: "p[i] in the transformed string is exactly the length in the original.",
+        note: "The radius in the padded string is the length in the original.",
         code: `func longestPalindrome(s string) string {
     if len(s) < 2 {
         return s
@@ -1247,7 +1250,7 @@ func dupOfLength(s string, k int) string {
       {
         name: "Count palindromes",
         filename: "count_pal.go",
-        note: "A palindrome of radius r contains ceil(r/2) palindromic substrings centred there.",
+        note: "A palindrome of radius r contains about r/2 smaller ones inside it.",
         code: `func countSubstrings(s string) int {
     p := manacher(s)
 
@@ -1264,7 +1267,7 @@ func dupOfLength(s string, k int) string {
       { label: "Space", value: "O(n)" },
       { label: "Expand around centres", value: "O(n²)", note: "the simpler alternative" },
     ],
-    why: "The right boundary only ever moves forward, and every expansion step moves it. So the total expansion work across all centres is bounded by n, even though any individual centre may expand far.",
+    why: "The right edge only ever moves forward, and every extra comparison moves it. So all the growing across the whole string adds up to n steps, even though one centre may grow a long way.",
     variations: [
       { name: "Expand around centres", detail: "O(n²) but a quarter of the code — usually the right answer in an interview." },
       { name: "Palindromic tree (Eertree)", detail: "Maintains all distinct palindromic substrings online." },
@@ -1294,9 +1297,9 @@ func dupOfLength(s string, k int) string {
     typicalQuestion: "Compute the n-th Fibonacci number for n up to 1e18, modulo 1e9+7.",
     mentalModel: {
       lines: [
-        "Write one DP step as a matrix-vector product.",
-        "n steps is that matrix raised to the n-th power.",
-        "Exponentiation by squaring does it in log n multiplications.",
+        "Write one step of the recurrence as a matrix times a vector.",
+        "Then n steps is that matrix raised to the n.",
+        "Squaring repeatedly gets you there in log n multiplications.",
       ],
       diagram: `  [F(n+1)]   [1 1]   [F(n)  ]
   [F(n)  ] = [1 0] · [F(n−1)]
@@ -1304,7 +1307,7 @@ func dupOfLength(s string, k int) string {
   n steps → M^n
 
   M^13 = M^8 · M^4 · M^1`,
-      key: "Adjacency matrix to the k-th power counts paths of exactly length k.",
+      key: "An adjacency matrix raised to the k counts the walks of exactly k steps.",
     },
     templates: [
       {
@@ -1316,17 +1319,11 @@ func dupOfLength(s string, k int) string {
 type Matrix [][]int
 
 func matMul(a, b Matrix) Matrix {
-    n, m, p := len(a), len(b), len(b[0])
+    n, p := len(a), len(b[0])
     c := make(Matrix, n)
     for i := range c {
         c[i] = make([]int, p)
-    }
-
-    for i := 0; i < n; i++ {
-        for k := 0; k < m; k++ {
-            if a[i][k] == 0 {
-                continue
-            }
+        for k := range b {
             for j := 0; j < p; j++ {
                 c[i][j] = (c[i][j] + a[i][k]*b[k][j]) % mod
             }
@@ -1356,7 +1353,7 @@ func matPow(m Matrix, p int) Matrix {
       {
         name: "Fibonacci",
         filename: "fib_matrix.go",
-        note: "The two-by-two case, which is the one worth memorising.",
+        note: "The two-by-two case, and the one worth remembering.",
         code: `func fib(n int) int {
     if n == 0 {
         return 0
@@ -1369,7 +1366,7 @@ func matPow(m Matrix, p int) Matrix {
       {
         name: "Counting paths",
         filename: "path_count.go",
-        note: "A^k [i][j] is the number of walks of exactly k edges from i to j.",
+        note: "Entry [i][j] is the number of walks of exactly k edges from i to j.",
         code: `func pathsOfLength(adj Matrix, k int) Matrix {
     return matPow(adj, k) // entry [i][j] = walks of length k
 }`,
@@ -1377,7 +1374,7 @@ func matPow(m Matrix, p int) Matrix {
       {
         name: "General recurrence",
         filename: "linear_recurrence.go",
-        note: "Companion matrix for f(n) = c1·f(n-1) + … + ck·f(n-k).",
+        note: "First row holds the coefficients; the rest shifts the window along.",
         code: `func companion(coeffs []int) Matrix {
     k := len(coeffs)
     m := make(Matrix, k)
@@ -1428,9 +1425,10 @@ func matPow(m Matrix, p int) Matrix {
     typicalQuestion: "Count the arrangements modulo 1e9+7.",
     mentalModel: {
       lines: [
-        "Addition, subtraction and multiplication distribute over the modulus.",
-        "Division does not — multiply by the modular inverse instead.",
-        "When M is prime, a^(M-2) mod M is the inverse of a, by Fermat's little theorem.",
+        "Add, subtract and multiply as normal, taking the remainder as you go.",
+        "Division does not work that way.",
+        "To divide by b, multiply by its inverse instead.",
+        "When the modulus is prime, the inverse of b is b to the power (mod - 2).",
       ],
       diagram: `  (a + b) % M = ((a%M) + (b%M)) % M
   (a × b) % M = ((a%M) × (b%M)) % M
@@ -1438,7 +1436,7 @@ func matPow(m Matrix, p int) Matrix {
 
   a / b  ✗
   a × inverse(b)  ✓`,
-      key: "Go's % keeps the sign of the dividend. Always add M before the final remainder.",
+      key: "Go's % keeps the sign of the left-hand side, so always add the modulus before the final %.",
     },
     templates: [
       {
@@ -1467,7 +1465,7 @@ func powMod(base, exp int) int {
       {
         name: "Modular inverse",
         filename: "mod_inverse.go",
-        note: "Fermat needs a prime modulus; extended Euclid works whenever gcd(a, m) = 1.",
+        note: "Fermat needs a prime modulus. Extended Euclid works more generally.",
         code: `// prime modulus: a^(mod-2) is the inverse of a
 func inverse(a int) int { return powMod(a, mod-2) }
 
@@ -1493,7 +1491,7 @@ func extGCD(a, b int) (g, x, y int) {
       {
         name: "Binomials",
         filename: "binomial.go",
-        note: "Precompute factorials and their inverses once, then every nCr is O(1).",
+        note: "Work out the factorials once, then every nCr is a single multiply.",
         code: `type Comb struct {
     fact, inv []int
 }

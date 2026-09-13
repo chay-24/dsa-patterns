@@ -17,9 +17,9 @@ export const backtracking: Pattern[] = [
     typicalQuestion: "Return all possible subsets of a set of distinct integers.",
     mentalModel: {
       lines: [
-        "At index i, branch twice: with nums[i], and without it.",
-        "Equivalently: iterate the integers 0..2^n-1 and read their bits.",
-        "Duplicates are handled by sorting, then skipping repeats at the same depth.",
+        "Every element is one yes/no choice: take it or leave it.",
+        "That gives 2^n results, so n has to be small.",
+        "Record at every step, not only at the end. Each partial pick is itself a subset.",
       ],
       diagram: `            []
           /    \\
@@ -28,13 +28,13 @@ export const backtracking: Pattern[] = [
    [1,2] [1]  [2]  []
 
   2^n leaves, one per subset`,
-      key: "Record at every node, not only at the leaves — every prefix is itself a subset.",
+      key: "For distinct elements, looping over the integers 0 to 2^n-1 is often simpler than recursion.",
     },
     templates: [
       {
         name: "Backtracking",
         filename: "subsets.go",
-        note: "The result is appended at every node, and a copy is essential.",
+        note: "Record at every node, and copy the slice before you store it.",
         code: `func subsets(nums []int) [][]int {
     var out [][]int
     cur := []int{}
@@ -57,7 +57,7 @@ export const backtracking: Pattern[] = [
       {
         name: "Bitmask",
         filename: "subsets_bitmask.go",
-        note: "No recursion, no backtracking — often the clearer answer for distinct elements.",
+        note: "No recursion at all. Often the clearer answer for distinct elements.",
         code: `func subsetsBitmask(nums []int) [][]int {
     n := len(nums)
     out := make([][]int, 0, 1<<n)
@@ -77,7 +77,7 @@ export const backtracking: Pattern[] = [
       {
         name: "With duplicates",
         filename: "subsets_ii.go",
-        note: "Sort first. i > start is the guard that skips a duplicate at the same depth.",
+        note: "Sort first. i > start is what skips a repeat at the same depth.",
         code: `func subsetsWithDup(nums []int) [][]int {
     sort.Ints(nums)
     var out [][]int
@@ -137,9 +137,10 @@ export const backtracking: Pattern[] = [
     typicalQuestion: "Find all unique combinations summing to a target.",
     mentalModel: {
       lines: [
-        "The start index is the whole mechanism: it forces indices to increase.",
-        "Recurse with i to allow reusing the current element, or i+1 to move past it.",
-        "Prune early: if the remaining budget is already exceeded, stop.",
+        "Order does not matter, so force the picks to go left to right.",
+        "A start index does exactly that.",
+        "Pass i to allow reusing the current item, or i+1 to move past it.",
+        "Stop early once the remaining budget cannot work.",
       ],
       diagram: `  candidates [2,3,6,7]  target 7
 
@@ -149,13 +150,13 @@ export const backtracking: Pattern[] = [
   7 → ✓
 
   sorted input makes break legal`,
-      key: "Sort the candidates so a single break replaces a continue — that is the real speed-up.",
+      key: "Sort the candidates so one break replaces a continue. That is the real speed-up.",
     },
     templates: [
       {
         name: "Choose k",
         filename: "combinations.go",
-        note: "The upper bound on i prunes branches that cannot reach k elements.",
+        note: "The upper bound on i cuts off branches that cannot reach k items.",
         code: `func combine(n, k int) [][]int {
     var out [][]int
     cur := []int{}
@@ -181,7 +182,7 @@ export const backtracking: Pattern[] = [
       {
         name: "Combination sum (reuse)",
         filename: "combination_sum.go",
-        note: "Recurse with i, not i+1, to reuse the same candidate.",
+        note: "Recurse with i, not i+1, to use the same number again.",
         code: `func combinationSum(candidates []int, target int) [][]int {
     sort.Ints(candidates)
     var out [][]int
@@ -210,7 +211,7 @@ export const backtracking: Pattern[] = [
       {
         name: "Each used once",
         filename: "combination_sum_ii.go",
-        note: "i+1 plus the duplicate skip — each number is used at most once per combination.",
+        note: "i+1 plus the duplicate skip: each number appears at most once.",
         code: `func combinationSum2(candidates []int, target int) [][]int {
     sort.Ints(candidates)
     var out [][]int
@@ -242,7 +243,7 @@ export const backtracking: Pattern[] = [
       {
         name: "Cartesian product",
         filename: "phone_letters.go",
-        note: "One position per depth, with all its options at that level.",
+        note: "One position per level, all its options at that level.",
         code: `func letterCombinations(digits string) []string {
     if digits == "" {
         return nil
@@ -308,9 +309,9 @@ export const backtracking: Pattern[] = [
     typicalQuestion: "Return all permutations of a list of distinct integers.",
     mentalModel: {
       lines: [
-        "At each depth, choose any element not yet used.",
-        "Either track a used[] array, or swap the chosen element into position.",
-        "For duplicates: sort, then only use a repeated value if its twin was already used at this depth.",
+        "At each position, choose any element you have not used yet.",
+        "Track that with a used[] array, or by swapping the choice into place.",
+        "With duplicates: sort, then only let the leftmost unused copy start a branch.",
       ],
       diagram: `  depth 0: choose any of n
   depth 1: choose any of n-1
@@ -318,13 +319,13 @@ export const backtracking: Pattern[] = [
   n! leaves
 
   swap approach: nums[depth..] are the unused ones`,
-      key: "Duplicate handling differs from combinations — the condition is about the twin, not the position.",
+      key: "The duplicate rule here is about the twin, not the position. It differs from combinations.",
     },
     templates: [
       {
         name: "Used array",
         filename: "permutations.go",
-        note: "Clearest form, and easy to extend with constraints.",
+        note: "The clearest version, and the easiest to add rules to.",
         code: `func permute(nums []int) [][]int {
     var out [][]int
     cur := []int{}
@@ -357,7 +358,7 @@ export const backtracking: Pattern[] = [
       {
         name: "Swap in place",
         filename: "permutations_swap.go",
-        note: "No used array and no extra slice — everything after depth is unused.",
+        note: "No used array: everything after the current position is unused.",
         code: `func permuteSwap(nums []int) [][]int {
     var out [][]int
 
@@ -381,7 +382,7 @@ export const backtracking: Pattern[] = [
       {
         name: "With duplicates",
         filename: "permutations_ii.go",
-        note: "Skip a duplicate unless its identical predecessor is currently used.",
+        note: "Skip a repeat unless its identical neighbour is currently in use.",
         code: `func permuteUnique(nums []int) [][]int {
     sort.Ints(nums)
     var out [][]int
@@ -419,7 +420,7 @@ export const backtracking: Pattern[] = [
       {
         name: "Next permutation",
         filename: "next_permutation.go",
-        note: "O(n) iteration through permutations in lexicographic order — no recursion.",
+        note: "Steps through all orderings one at a time, with no recursion.",
         code: `func nextPermutation(nums []int) {
     n := len(nums)
 
@@ -476,9 +477,9 @@ export const backtracking: Pattern[] = [
     typicalQuestion: "Place n queens on an n×n board so that none attack each other.",
     mentalModel: {
       lines: [
-        "One queen per row, so recursion depth equals the row index.",
-        "Three conflict sets: column, r+c (anti-diagonal), r-c (diagonal).",
-        "r-c can be negative — offset it by n, or use a map.",
+        "One queen per row, so the depth of the recursion is the row.",
+        "Three things can clash: the column, and the two diagonals.",
+        "A diagonal is just r+c or r-c held constant.",
       ],
       diagram: `  r + c is constant along  ╱
   r − c is constant along  ╲
@@ -487,13 +488,13 @@ export const backtracking: Pattern[] = [
   . . . Q     r+c {1, 4}
   Q . . .     r−c {−1, −2}
   . . Q .`,
-      key: "Encoding the diagonals as r+c and r-c is the entire trick.",
+      key: "Writing diagonals as r+c and r-c is the whole trick.",
     },
     templates: [
       {
         name: "With sets",
         filename: "n_queens.go",
-        note: "Three boolean arrays make every conflict check O(1).",
+        note: "Three boolean arrays make every clash check a single lookup.",
         code: `func solveNQueens(n int) [][]string {
     var out [][]string
     pos := make([]int, n) // pos[r] = column of the queen in row r
@@ -528,7 +529,7 @@ export const backtracking: Pattern[] = [
       {
         name: "Bitmask",
         filename: "n_queens_bitmask.go",
-        note: "Dramatically faster: available is a bitmask, and the loop takes the lowest set bit.",
+        note: "Much faster: available is a mask and you take the lowest set bit.",
         code: `func totalNQueens(n int) int {
     full := 1<<n - 1
     count := 0
@@ -555,7 +556,7 @@ export const backtracking: Pattern[] = [
       },
     ],
     complexity: [
-      { label: "Time", value: "O(n!)", note: "far less in practice thanks to pruning" },
+      { label: "Time", value: "O(n!)", note: "far less in practice, thanks to pruning" },
       { label: "Conflict check", value: "O(1)" },
       { label: "Space", value: "O(n)" },
     ],
@@ -581,16 +582,16 @@ export const backtracking: Pattern[] = [
     usedFor: ["sudoku", "latin squares", "grid filling under constraints", "CSP-style puzzles"],
     signals: ["sudoku", "fill the grid", "each row and column must contain", "valid board", "3x3 box"],
     recognition: [
-      "cells must be filled subject to row, column and region constraints",
-      "the constraint sets can be maintained incrementally",
-      "choosing the most constrained cell next collapses the search dramatically",
+      "cells must be filled while obeying row, column and box rules",
+      "you can keep the used-digit sets up to date as you place and remove",
+      "filling the most constrained cell first shrinks the search enormously",
     ],
     typicalQuestion: "Fill the empty cells of a Sudoku board.",
     mentalModel: {
       lines: [
-        "Maintain three constraint sets: per row, per column, per 3×3 box.",
-        "Box index is (r/3)*3 + c/3.",
-        "Always fill the cell with the fewest options next — minimum remaining values.",
+        "Keep three sets of used digits: per row, per column, per box.",
+        "The box number is (r/3)*3 + c/3.",
+        "Always fill the cell with the fewest options left.",
       ],
       diagram: `  box index = (r/3)*3 + c/3
 
@@ -601,13 +602,13 @@ export const backtracking: Pattern[] = [
   ├───┼───┼───┤
   │ 6 │ 7 │ 8 │
   └───┴───┴───┘`,
-      key: "MRV ordering is the difference between instant and hopeless.",
+      key: "Picking the most constrained cell next is the difference between instant and hopeless.",
     },
     templates: [
       {
         name: "Validity sets",
         filename: "sudoku_sets.go",
-        note: "Maintained incrementally, so each placement check is O(1).",
+        note: "Kept up to date as you go, so every check is one lookup.",
         code: `type Sudoku struct {
     board    *[9][9]byte
     rows     [9][9]bool
@@ -630,7 +631,7 @@ func (s *Sudoku) set(r, c, d int, on bool) {
       {
         name: "Solver",
         filename: "sudoku_solve.go",
-        note: "Returns true to unwind the whole recursion as soon as a solution is found.",
+        note: "Return true to unwind the whole recursion as soon as it works out.",
         code: `func (s *Sudoku) Solve(cells [][2]int, k int) bool {
     if k == len(cells) {
         return true
@@ -657,7 +658,7 @@ func (s *Sudoku) set(r, c, d int, on bool) {
       {
         name: "Validation only",
         filename: "valid_sudoku.go",
-        note: "No search needed — one pass with three sets.",
+        note: "No searching needed. One pass with three sets.",
         code: `func isValidSudoku(board [][]byte) bool {
     var rows, cols, boxes [9][9]bool
 
@@ -692,7 +693,7 @@ func (s *Sudoku) set(r, c, d int, on bool) {
     mistakes: [
       { title: "Undoing after a successful solve", detail: "Once the answer is found you must return up without restoring the board." },
       { title: "Wrong box index", detail: "(r/3)*3 + c/3, not r/3 + c/3." },
-      { title: "Rebuilding the sets on every check", detail: "Maintain them incrementally instead." },
+      { title: "Rebuilding the sets on every check", detail: "Keep them up to date as you go instead." },
     ],
     related: ["constraint-search", "n-queens", "hash-map"],
     problems: [37, 36],
@@ -714,8 +715,8 @@ func (s *Sudoku) set(r, c, d int, on bool) {
     mentalModel: {
       lines: [
         "Choose, recurse, undo.",
-        "Prune the moment a partial solution cannot possibly complete.",
-        "Order the choices so the most constrained decisions happen first.",
+        "Stop a branch the moment it cannot possibly work.",
+        "Make the tightest decisions first, so dead ends show up early.",
       ],
       diagram: `  backtrack(state):
       if complete: record; return
@@ -726,7 +727,7 @@ func (s *Sudoku) set(r, c, d int, on bool) {
           undo
 
   pruning early beats validating late`,
-      key: "Never generate and then filter. Make invalid branches unreachable.",
+      key: "Never build everything and then filter. Make the bad branches impossible to enter.",
     },
     templates: [
       {
@@ -752,7 +753,7 @@ func (s *Sudoku) set(r, c, d int, on bool) {
       {
         name: "Prune by rule",
         filename: "generate_parentheses.go",
-        note: "Only valid strings are ever built — no post-hoc validation.",
+        note: "Only valid strings are ever built. Nothing is checked afterwards.",
         code: `func generateParenthesis(n int) []string {
     var out []string
     cur := make([]byte, 0, 2*n)
@@ -782,7 +783,7 @@ func (s *Sudoku) set(r, c, d int, on bool) {
       {
         name: "Precomputed feasibility",
         filename: "palindrome_partition.go",
-        note: "An O(n²) palindrome table makes each cut test O(1).",
+        note: "A palindrome table up front makes each cut test one lookup.",
         code: `func partition(s string) [][]string {
     n := len(s)
     isPal := make([][]bool, n)
@@ -821,7 +822,7 @@ func (s *Sudoku) set(r, c, d int, on bool) {
       {
         name: "Grid search",
         filename: "word_search.go",
-        note: "Mark the cell in place, recurse, restore — the visited set costs nothing.",
+        note: "Write into the cell to mark it, recurse, write it back.",
         code: `func exist(board [][]byte, word string) bool {
     var dfs func(r, c, i int) bool
     dfs = func(r, c, i int) bool {
@@ -858,7 +859,7 @@ func (s *Sudoku) set(r, c, d int, on bool) {
     ],
     complexity: [
       { label: "Worst case", value: "exponential", note: "O(b^d) for branching b and depth d" },
-      { label: "With pruning", value: "far smaller", note: "problem-dependent, often the difference between viable and not" },
+      { label: "With pruning", value: "far smaller", note: "often the difference between usable and not" },
       { label: "Space", value: "O(depth)" },
     ],
     variations: [

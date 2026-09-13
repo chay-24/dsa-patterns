@@ -13,15 +13,13 @@ export function Complexity({
       {rows.map((r) => (
         <div
           key={r.label}
-          className="flex flex-wrap items-baseline gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0"
+          className="grid grid-cols-1 items-baseline gap-x-6 gap-y-1 py-2.5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,7rem)_minmax(0,auto)_minmax(0,1fr)]"
         >
-          <dt className="w-28 shrink-0 text-[13px] text-fg-secondary">{r.label}</dt>
+          <dt className="text-[13px] text-fg-secondary">{r.label}</dt>
           <dd className="font-mono text-[13px] text-code">{r.value}</dd>
-          {r.note ? (
-            <dd className="w-full text-[12.5px] text-fg-muted sm:ml-auto sm:w-auto sm:text-right">
-              {r.note}
-            </dd>
-          ) : null}
+          <dd className="text-[12.5px] leading-relaxed text-fg-muted sm:text-right">
+            {r.note ?? ""}
+          </dd>
         </div>
       ))}
     </dl>

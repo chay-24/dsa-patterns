@@ -17,9 +17,9 @@ export const greedy: Pattern[] = [
     typicalQuestion: "Arrange the numbers to form the largest possible concatenated value.",
     mentalModel: {
       lines: [
-        "Greedy = sort + one pass.",
-        "The sort key IS the algorithm — get that right and the pass is trivial.",
-        "Justify it with an exchange argument, not with examples.",
+        "Greedy is sort, then one pass.",
+        "The sort key IS the algorithm. Get that right and the pass is trivial.",
+        "Before you trust it, explain why the first pick is always safe.",
       ],
       diagram: `  unsorted → which choice is safe? unclear
 
@@ -29,13 +29,13 @@ export const greedy: Pattern[] = [
 
   proof: any optimal solution can be
   rewritten to start with this choice`,
-      key: "If you cannot state why the first choice is safe, it is probably DP, not greedy.",
+      key: "If you cannot say why the first choice is safe, it is probably DP, not greedy.",
     },
     templates: [
       {
         name: "Two-sequence matching",
         filename: "assign_cookies.go",
-        note: "Sort both, then advance whichever pointer can still be satisfied.",
+        note: "Sort both, then move whichever pointer can still be satisfied.",
         code: `func findContentChildren(greed, sizes []int) int {
     sort.Ints(greed)
     sort.Ints(sizes)
@@ -52,7 +52,7 @@ export const greedy: Pattern[] = [
       {
         name: "Custom order",
         filename: "largest_number.go",
-        note: "The comparator encodes the objective: a before b iff a+b > b+a.",
+        note: "The comparator carries the whole idea: a before b when a+b beats b+a.",
         code: `func largestNumber(nums []int) string {
     strs := make([]string, len(nums))
     for i, v := range nums {
@@ -72,7 +72,7 @@ export const greedy: Pattern[] = [
       {
         name: "Insert by rank",
         filename: "queue_reconstruction.go",
-        note: "Place the tallest first: later, shorter insertions cannot disturb their counts.",
+        note: "Place the tallest first. Shorter people inserted later cannot disturb them.",
         code: `func reconstructQueue(people [][]int) [][]int {
     sort.Slice(people, func(i, j int) bool {
         if people[i][0] != people[j][0] {
@@ -94,7 +94,7 @@ export const greedy: Pattern[] = [
       {
         name: "Two sweeps",
         filename: "candy.go",
-        note: "When constraints point both ways, satisfy each direction in its own pass and take the max.",
+        note: "When rules point both ways, satisfy each direction in its own pass.",
         code: `func candy(ratings []int) int {
     n := len(ratings)
     give := make([]int, n)
@@ -134,9 +134,9 @@ export const greedy: Pattern[] = [
     ],
     mistakes: [
       { title: "Greedy where DP is required", detail: "Coin change with coins {1,3,4} and amount 6: greedy gives 3 coins, optimal is 2." },
-      { title: "A comparator that is not a strict ordering", detail: "sort.Slice can misbehave when less() is not antisymmetric." },
+      { title: "A comparator that says both ways are true", detail: "sort.Slice can misbehave if less(a,b) and less(b,a) are both true." },
       { title: "Sorting when positions matter", detail: "If the answer is an index into the original array, sort pairs, not values." },
-      { title: "Skipping the proof", detail: "Passing a few examples is not evidence; find the exchange argument." },
+      { title: "Skipping the proof", detail: "Passing a few examples proves nothing. Find the swap argument." },
     ],
     related: ["interval-scheduling", "greedy-heap", "sorting", "local-global"],
     problems: [455, 179, 406, 135, 976, 1338, 763, 56, 354],
@@ -157,9 +157,10 @@ export const greedy: Pattern[] = [
     typicalQuestion: "Maximise capital by choosing up to k projects, each unlocked by your current capital.",
     mentalModel: {
       lines: [
-        "Sort by the dimension that gates availability — time, capital, deadline.",
-        "Sweep, pushing everything that has become available into the heap.",
-        "Take the heap's best. Optionally push back the thing you displaced.",
+        "Sort by whatever decides when an option becomes available.",
+        "Sweep forward, pushing options into a heap as they unlock.",
+        "Take the best one in the heap.",
+        "Sometimes you push back what you replaced, and take it again later.",
       ],
       diagram: `  sort by availability
       │
@@ -167,13 +168,13 @@ export const greedy: Pattern[] = [
   push newly available ──▶ [ heap ]
                               │
                           pop the best`,
-      key: "Sorting handles 'what is allowed'; the heap handles 'what is best'.",
+      key: "Sorting handles what is allowed. The heap handles what is best.",
     },
     templates: [
       {
         name: "Availability sweep",
         filename: "ipo.go",
-        note: "Two orderings at once: sorted by capital, heap by profit.",
+        note: "Two orders at once: sorted by cost to unlock, heaped by payoff.",
         code: `func findMaximizedCapital(k, w int, profits, capital []int) int {
     type proj struct{ cap, profit int }
     projects := make([]proj, len(profits))
@@ -204,7 +205,7 @@ export const greedy: Pattern[] = [
       {
         name: "Regret heap",
         filename: "furthest_building.go",
-        note: "Spend the scarce resource freely, then demote the smallest use when you run out.",
+        note: "Spend the scarce thing freely, then downgrade the smallest use when you run out.",
         code: `func furthestBuilding(heights []int, bricks, ladders int) int {
     h := &IntHeap{} // min-heap of climbs currently using a ladder
     heap.Init(h)
@@ -229,7 +230,7 @@ export const greedy: Pattern[] = [
       {
         name: "Frequency scheduling",
         filename: "reorganize_string.go",
-        note: "Always place the most frequent character that is not the one just placed.",
+        note: "Always place the most common letter that is not the one you just placed.",
         code: `func reorganizeString(s string) string {
     var cnt [26]int
     for i := 0; i < len(s); i++ {
@@ -304,9 +305,9 @@ export const greedy: Pattern[] = [
     typicalQuestion: "What is the minimum number of intervals to remove so none overlap?",
     mentalModel: {
       lines: [
-        "Maximise the count of non-overlapping intervals → sort by END.",
-        "Merge overlapping intervals → sort by START.",
-        "Count simultaneous intervals → sweep line over the endpoints.",
+        "To fit as many as possible, sort by END time.",
+        "To merge overlaps, sort by START time.",
+        "To count how many run at once, sweep the endpoints.",
       ],
       diagram: `  sort by end:
   ├───┤
@@ -315,13 +316,13 @@ export const greedy: Pattern[] = [
               ├───┤
 
   sort by start: extend or push`,
-      key: "By end for counting, by start for merging. Mixing them is the classic error.",
+      key: "By end for counting. By start for merging. Mixing them is the classic mistake.",
     },
     templates: [
       {
         name: "Max non-overlapping",
         filename: "non_overlapping.go",
-        note: "Earliest end first. Count what you keep; the answer is n minus that.",
+        note: "Earliest finisher first. Count what you keep; the answer is the rest.",
         code: `func eraseOverlapIntervals(intervals [][]int) int {
     sort.Slice(intervals, func(i, j int) bool {
         return intervals[i][1] < intervals[j][1] // by END
@@ -340,7 +341,7 @@ export const greedy: Pattern[] = [
       {
         name: "Merge",
         filename: "merge_intervals.go",
-        note: "Sort by start, then either extend the last interval or start a new one.",
+        note: "Sort by start, then either stretch the last interval or begin a new one.",
         code: `func merge(intervals [][]int) [][]int {
     sort.Slice(intervals, func(i, j int) bool {
         return intervals[i][0] < intervals[j][0] // by START
@@ -361,7 +362,7 @@ export const greedy: Pattern[] = [
       {
         name: "Insert into sorted",
         filename: "insert_interval.go",
-        note: "Three phases: strictly before, overlapping (absorb), strictly after.",
+        note: "Three phases: before, overlapping (absorb), after.",
         code: `func insert(intervals [][]int, newIv []int) [][]int {
     var out [][]int
     i, n := 0, len(intervals)
@@ -383,7 +384,7 @@ export const greedy: Pattern[] = [
       {
         name: "Max simultaneous",
         filename: "meeting_rooms.go",
-        note: "Either a sweep over sorted events, or a min-heap of end times.",
+        note: "Walk the sorted starts and ends together, tracking how many are open.",
         code: `func minMeetingRooms(intervals [][]int) int {
     starts := make([]int, len(intervals))
     ends := make([]int, len(intervals))
@@ -411,7 +412,7 @@ export const greedy: Pattern[] = [
       { label: "Sweep", value: "O(n)" },
       { label: "Space", value: "O(n)", note: "O(1) extra if sorting in place" },
     ],
-    why: "Choosing the interval that finishes earliest is safe by an exchange argument: take any optimal schedule, and its first interval finishes no earlier than yours, so swapping yours in leaves at least as much room for the rest.",
+    why: "Keeping the interval that finishes earliest leaves the most room for everything after it. Take any best-possible schedule: its first interval finishes no sooner than yours, so swapping yours in is never worse.",
     variations: [
       { name: "Minimum arrows", detail: "Identical to maximum non-overlapping — count the groups instead of the removals." },
       { name: "Remove covered intervals", detail: "Sort start ascending, end descending, then track the furthest end." },
@@ -431,7 +432,7 @@ export const greedy: Pattern[] = [
     slug: "activity-selection",
     title: "Activity Selection",
     category: "greedy",
-    description: "The canonical greedy proof — and the template for arguing any greedy choice is safe.",
+    description: "The classic greedy proof, and the shape of the argument for any greedy choice.",
     concepts: ["Exchange argument", "Earliest finish", "Optimality"],
     usedFor: ["maximum compatible activities", "justifying greedy choices", "deadline feasibility"],
     signals: ["maximum number of activities", "non-conflicting", "select as many as possible", "schedule"],
@@ -443,10 +444,10 @@ export const greedy: Pattern[] = [
     typicalQuestion: "Select the maximum number of activities that do not overlap.",
     mentalModel: {
       lines: [
-        "Pick the activity that finishes earliest.",
-        "Discard everything that conflicts with it.",
-        "Repeat on what remains.",
-        "The proof: any optimal solution's first activity finishes no earlier, so swapping is safe.",
+        "Take whatever finishes first.",
+        "Throw away everything that clashes with it.",
+        "Repeat on what is left.",
+        "It is safe because any best schedule can swap in your pick and stay just as good.",
       ],
       diagram: `  exchange argument
 
@@ -456,7 +457,7 @@ export const greedy: Pattern[] = [
   replace OPT's first with ours
   → still valid, still the same size
   → greedy is optimal by induction`,
-      key: "Greedy needs the greedy-choice property plus optimal substructure. Say both out loud.",
+      key: "Greedy needs two things: the first pick is safe, and what is left is the same problem.",
     },
     templates: [
       {
@@ -483,7 +484,7 @@ func selectActivities(a []Activity) []Activity {
       {
         name: "Deadline feasibility",
         filename: "job_deadlines.go",
-        note: "Take everything; when the schedule breaks, drop the least valuable job taken so far.",
+        note: "Take everything. When the schedule breaks, drop the longest job so far.",
         code: `func scheduleWithDeadlines(jobs [][]int) int {
     // jobs = [duration, deadline]
     sort.Slice(jobs, func(i, j int) bool { return jobs[i][1] < jobs[j][1] })
@@ -510,16 +511,16 @@ func selectActivities(a []Activity) []Activity {
       { label: "Selection", value: "O(n)" },
       { label: "With a heap", value: "O(n log n)" },
     ],
-    why: "Greedy is correct when two properties hold. Greedy-choice: there is an optimal solution containing the greedy first choice — proved by exchange. Optimal substructure: after committing, the rest of the problem is the same problem on a smaller input.",
+    why: "Greedy works when two things hold. First, some best answer starts with the greedy pick, which you prove by swapping. Second, after committing, what remains is the same problem on a smaller input.",
     variations: [
       { name: "Weighted activities", detail: "Greedy fails. Sort by end and DP with a binary search for the last compatible activity." },
       { name: "Multiple machines", detail: "Assign each activity to the machine that freed up earliest — a min-heap of release times." },
-      { name: "Matroid view", detail: "Greedy is exactly optimal on matroids; recognising one is a shortcut to a proof." },
+      { name: "Structures greedy always fits", detail: "Some structures always work with greedy. Spotting one is a quick proof." },
     ],
     mistakes: [
       { title: "Sorting by duration", detail: "Shortest-first is intuitive and wrong — it can block two compatible activities." },
       { title: "Sorting by start", detail: "A long first activity blocks everything after it." },
-      { title: "Assuming greedy extends to weights", detail: "The exchange argument breaks the moment items are worth different amounts." },
+      { title: "Assuming greedy extends to weights", detail: "The swap argument breaks the moment items are worth different amounts." },
     ],
     related: ["interval-scheduling", "matroid-intuition", "greedy-heap", "greedy-sorting"],
     problems: [435, 452, 455, 621],
@@ -540,21 +541,22 @@ func selectActivities(a []Activity) []Activity {
     typicalQuestion: "Is sorting by this key and taking greedily guaranteed to be optimal?",
     mentalModel: {
       lines: [
-        "Two tests. Downward closure: is every subset of a feasible set feasible?",
-        "Exchange: if |A| < |B|, is there an element of B that A can absorb and stay feasible?",
-        "Both true → sorting by weight and taking greedily is exactly optimal.",
+        "Two quick tests tell you whether greedy is safe.",
+        "One: is every part of a valid set also valid?",
+        "Two: can a smaller valid set always borrow an item from a bigger one?",
+        "Both yes means sort by value and take greedily.",
       ],
       diagram: `  forests in a graph      → matroid → Kruskal is optimal
   intervals by end        → matroid-like → greedy optimal
   coin change {1,3,4}     → NOT → greedy fails
   weighted intervals      → NOT → needs DP`,
-      key: "Cannot find the exchange argument in two minutes? Write the DP.",
+      key: "Cannot find the swap argument in two minutes? Write the DP.",
     },
     templates: [
       {
         name: "Greedy on a matroid",
         filename: "matroid_greedy.go",
-        note: "Sort by weight descending, take anything that keeps the set independent.",
+        note: "Sort by value, take anything that keeps the set valid.",
         code: `// generic greedy: optimal when independent() defines a matroid
 func matroidGreedy(items []Item, independent func([]Item) bool) []Item {
     sort.Slice(items, func(i, j int) bool {
@@ -573,7 +575,7 @@ func matroidGreedy(items []Item, independent func([]Item) bool) []Item {
       {
         name: "Kruskal as a matroid",
         filename: "kruskal_matroid.go",
-        note: "Forests form the graphic matroid; DSU is the independence oracle.",
+        note: "'Valid' here means no loop. Union-Find answers that instantly.",
         code: `// "independent" = acyclic. DSU answers it in O(alpha(n)).
 func kruskalMST(n int, edges [][]int) int {
     sort.Slice(edges, func(i, j int) bool { return edges[i][2] < edges[j][2] })
@@ -591,7 +593,7 @@ func kruskalMST(n int, edges [][]int) int {
       {
         name: "When greedy fails",
         filename: "greedy_fails.go",
-        note: "Keep these two counterexamples ready — they are the standard interview follow-up.",
+        note: "Keep these two counterexamples ready. They are the standard follow-up.",
         code: `// coin change: greedy is NOT optimal
 coins := []int{1, 3, 4}
 amount := 6
@@ -608,14 +610,14 @@ amount := 6
       { label: "Kruskal", value: "O(E log E)" },
     ],
     variations: [
-      { name: "Graphic matroid", detail: "Independent sets are forests — this is why Kruskal works." },
-      { name: "Uniform matroid", detail: "Any set of size at most k is independent — 'pick the k largest'." },
-      { name: "Scheduling matroid", detail: "Sets of jobs that can all meet their deadlines — supports greedy with a heap." },
-      { name: "Matroid intersection", detail: "Two matroids at once is polynomial; three is NP-hard." },
+      { name: "Forests in a graph", detail: "Sets of edges with no loop always work with greedy. That is why Kruskal is correct." },
+      { name: "Any k of them", detail: "Any set of size at most k is valid, so 'take the k best' is optimal." },
+      { name: "Jobs that all fit", detail: "Sets of jobs that can all meet their deadlines. Greedy plus a heap works." },
+      { name: "Two rules at once", detail: "Two such rules at once is still solvable. Three is not." },
     ],
     mistakes: [
-      { title: "Assuming greedy because it is simple", detail: "Test it on a small adversarial case before committing." },
-      { title: "Confusing locally optimal with globally optimal", detail: "The exchange argument is what bridges them." },
+      { title: "Assuming greedy because it is simple", detail: "Try it on a small nasty case before you commit." },
+      { title: "Confusing locally optimal with globally optimal", detail: "The swap argument is what connects the two." },
       { title: "Ignoring weights", detail: "Unweighted problems are often greedy; adding weights usually breaks it." },
     ],
     related: ["activity-selection", "minimum-spanning-tree", "greedy-sorting", "local-global"],
@@ -625,7 +627,7 @@ amount := 6
     slug: "local-global",
     title: "Local → Global Optimisation",
     category: "greedy",
-    description: "Sweep once, keeping a running invariant that guarantees the global answer.",
+    description: "Sweep once, carrying one running number that guarantees the final answer.",
     concepts: ["Running best", "Reset", "Reachability"],
     usedFor: ["jump games", "gas stations", "furthest reach", "single-pass feasibility"],
     signals: ["can you reach", "minimum jumps", "furthest you can get", "start index", "one pass"],
@@ -637,9 +639,9 @@ amount := 6
     typicalQuestion: "Can you reach the last index, given each index's maximum jump length?",
     mentalModel: {
       lines: [
-        "Carry one number: how far you can currently get.",
-        "If the current index passes that, the answer is no.",
-        "When a prefix fails, restarting after it is safe — nothing inside it can work either.",
+        "Carry one running number: how far you can get, or how much you are short by.",
+        "Update it at every step.",
+        "If failing at i also rules out every start before i, one pass is enough.",
       ],
       diagram: `  nums  2  3  1  1  4
   reach 2  4  4  4  8
@@ -647,7 +649,7 @@ amount := 6
         i must never exceed reach
 
   jump count: reach a boundary → one more jump`,
-      key: "Prove that failing at i invalidates every start before i. That is what makes one pass enough.",
+      key: "Prove that failing at i kills everything before it. That is what makes one pass work.",
     },
     templates: [
       {
@@ -668,7 +670,7 @@ amount := 6
       {
         name: "Implicit BFS levels",
         filename: "jump_game_ii.go",
-        note: "Each jump covers an interval of indices — that interval is a BFS level.",
+        note: "Each jump covers a stretch of indices. That stretch is one BFS ring.",
         code: `func jump(nums []int) int {
     jumps, curEnd, farthest := 0, 0, 0
 
@@ -685,7 +687,7 @@ amount := 6
       {
         name: "Restart on deficit",
         filename: "gas_station.go",
-        note: "If the tank goes negative at i, no start in [start, i] can work.",
+        note: "Tank goes negative at i? No start up to i can work. Begin again at i+1.",
         code: `func canCompleteCircuit(gas, cost []int) int {
     total, tank, start := 0, 0, 0
 
@@ -709,7 +711,7 @@ amount := 6
       {
         name: "Keep the flexible option",
         filename: "lemonade.go",
-        note: "Spend the least flexible resource first; hold the versatile one.",
+        note: "Spend the least useful thing first. Hold on to what fits everywhere.",
         code: `func lemonadeChange(bills []int) bool {
     five, ten := 0, 0
 
@@ -742,7 +744,7 @@ amount := 6
       { label: "Time", value: "O(n)" },
       { label: "Space", value: "O(1)" },
     ],
-    why: "In the gas-station problem, if the running tank goes negative at index i, then every start from the previous start up to i also fails — because each of those starts begins with a suffix of an already non-negative prefix, so it can only be worse. That is why one pass suffices instead of trying all n starts.",
+    why: "In gas station, if the tank goes negative at index i, then every start between the last restart and i also fails: each of those begins partway through a stretch that was already not negative, so it can only be worse. That is why one pass replaces trying all n starts.",
     variations: [
       { name: "Two-directional sweeps", detail: "When constraints point both ways, sweep left to right and then right to left." },
       { name: "Running minimum", detail: "Best-time-to-buy-stock is this pattern: track the minimum so far." },

@@ -18,10 +18,9 @@ export const trees: Pattern[] = [
     typicalQuestion: "Return the inorder traversal of a binary tree.",
     mentalModel: {
       lines: [
-        "One recursion, three positions to do work.",
-        "Preorder: node, left, right — top-down, good for building and copying.",
-        "Inorder: left, node, right — sorted order on a BST.",
-        "Postorder: left, right, node — bottom-up, good for aggregating.",
+        "One recursion, three places to do the work.",
+        "Before the children: preorder. Between them: inorder. After them: postorder.",
+        "Inorder on a BST comes out sorted.",
       ],
       diagram: `        1
        / \\
@@ -30,13 +29,13 @@ export const trees: Pattern[] = [
   pre   1 2 3    (act before descending)
   in    2 1 3    (act between children)
   post  2 3 1    (act after descending)`,
-      key: "Ask: do I need information from my children before I decide? If yes, postorder.",
+      key: "Ask whether you need answers from the children first. If yes, that is postorder.",
     },
     templates: [
       {
         name: "Recursive",
         filename: "traversals.go",
-        note: "Move the visit line to switch orders — nothing else changes.",
+        note: "Move the visit line to change the order. Nothing else changes.",
         code: `type TreeNode struct {
     Val   int
     Left  *TreeNode
@@ -63,7 +62,7 @@ func inorder(root *TreeNode) []int {
       {
         name: "Serialise",
         filename: "serialize.go",
-        note: "Preorder with explicit nil markers round-trips uniquely.",
+        note: "Preorder with explicit nil markers rebuilds exactly one tree.",
         code: `func serialize(root *TreeNode) string {
     var sb strings.Builder
     var walk func(*TreeNode)
@@ -105,7 +104,7 @@ func deserialize(data string) *TreeNode {
       {
         name: "Morris traversal",
         filename: "morris.go",
-        note: "O(1) space: thread each node to its inorder predecessor, then unthread.",
+        note: "O(1) memory: borrow spare nil pointers, then put them back.",
         code: `func morrisInorder(root *TreeNode) []int {
     var out []int
     cur := root
@@ -137,8 +136,8 @@ func deserialize(data string) *TreeNode {
     ],
     complexity: [
       { label: "Time", value: "O(n)" },
-      { label: "Space", value: "O(h)", note: "recursion stack; h = n for a degenerate tree" },
-      { label: "Morris", value: "O(1)", note: "space, at the cost of temporarily mutating the tree" },
+      { label: "Space", value: "O(h)", note: "call stack; h = n for a chain" },
+      { label: "Morris", value: "O(1)", note: "but it rewrites pointers as it goes" },
     ],
     variations: [
       { name: "Level order", detail: "BFS with a queue rather than recursion." },
@@ -169,23 +168,23 @@ func deserialize(data string) *TreeNode {
     typicalQuestion: "What is the maximum depth of this binary tree?",
     mentalModel: {
       lines: [
-        "Decide two things: what flows DOWN as arguments, and what flows UP as the return.",
-        "Top-down: pass the accumulated state and test at the leaf.",
-        "Bottom-up: return the child answers and combine them here.",
-        "When both are needed, return a struct or a tuple.",
+        "Decide two things before you write anything.",
+        "What travels down as arguments, and what travels back up as the return.",
+        "Down: a running total, a bound. Up: a height, a sum, a yes/no.",
+        "If both children need to report several facts, return a small struct.",
       ],
       diagram: `        node
         ↓ args (bounds, running sum)
        / \\
       ↑   ↑  returns (height, sum, valid)
      combine here`,
-      key: "Write down the return type first. Most tree bugs are a return type that carries too little.",
+      key: "Write the return type first. Most tree bugs are a return that carries too little.",
     },
     templates: [
       {
         name: "Bottom-up",
         filename: "depth.go",
-        note: "Children return, parent combines. No shared mutable state.",
+        note: "Children answer, the parent combines. No shared state.",
         code: `func maxDepth(root *TreeNode) int {
     if root == nil {
         return 0
@@ -196,7 +195,7 @@ func deserialize(data string) *TreeNode {
       {
         name: "Top-down with bounds",
         filename: "validate_bst.go",
-        note: "Comparing a node only with its children is the classic wrong answer — carry the range.",
+        note: "Comparing a node only with its children is the classic wrong answer.",
         code: `func isValidBST(root *TreeNode) bool {
     var check func(*TreeNode, int, int) bool
 
@@ -216,7 +215,7 @@ func deserialize(data string) *TreeNode {
       {
         name: "Two values up",
         filename: "balanced.go",
-        note: "Return height and validity together so the whole check is one O(n) pass.",
+        note: "Return the height and the verdict together so one pass is enough.",
         code: `func isBalanced(root *TreeNode) bool {
     var height func(*TreeNode) int // -1 means unbalanced
 
@@ -241,7 +240,7 @@ func deserialize(data string) *TreeNode {
       {
         name: "Path with backtracking",
         filename: "path_sum_ii.go",
-        note: "Append before recursing, truncate after — and copy before storing.",
+        note: "Append, recurse, remove. And copy before you store.",
         code: `func pathSum(root *TreeNode, target int) [][]int {
     var out [][]int
     path := []int{}
@@ -302,22 +301,22 @@ func deserialize(data string) *TreeNode {
     typicalQuestion: "Return the values of the nodes visible from the right side.",
     mentalModel: {
       lines: [
-        "Push the root, then repeatedly process exactly one level.",
-        "Snapshot len(queue) before the level loop — children appended during it belong to the next level.",
-        "Depth is the number of levels processed.",
+        "Put the root in a queue, then handle exactly one level at a time.",
+        "Freeze the queue length first.",
+        "Anything added during the level belongs to the next one.",
       ],
       diagram: `  queue: [ root ]          level 0
   queue: [ a  b ]          level 1
   queue: [ c  d  e ]       level 2
 
   size = len(queue) at the top of each round`,
-      key: "The size snapshot is the entire technique.",
+      key: "Freezing the size is the whole technique.",
     },
     templates: [
       {
         name: "Level order",
         filename: "level_order.go",
-        note: "The base shape every variant edits.",
+        note: "The shape every other level-based answer edits.",
         code: `func levelOrder(root *TreeNode) [][]int {
     if root == nil {
         return nil
@@ -380,7 +379,7 @@ func deserialize(data string) *TreeNode {
       {
         name: "Zigzag",
         filename: "zigzag.go",
-        note: "Reverse on write rather than traversing backwards.",
+        note: "Reverse on the way into the slice, not while walking.",
         code: `func zigzagLevelOrder(root *TreeNode) [][]int {
     if root == nil {
         return nil
@@ -419,7 +418,7 @@ func deserialize(data string) *TreeNode {
     ],
     complexity: [
       { label: "Time", value: "O(n)" },
-      { label: "Space", value: "O(w)", note: "w = maximum width, up to n/2 in a complete tree" },
+      { label: "Space", value: "O(w)", note: "w = widest level, up to n/2" },
     ],
     variations: [
       { name: "Minimum depth", detail: "BFS returns as soon as it meets the first leaf, which beats DFS on skewed trees." },
@@ -450,9 +449,9 @@ func deserialize(data string) *TreeNode {
     typicalQuestion: "Implement an iterator over a BST returning values in ascending order.",
     mentalModel: {
       lines: [
-        "The stack holds the nodes whose left subtrees are done but which have not been visited.",
-        "Push left as far as possible, pop and visit, then move right and repeat.",
-        "Postorder is easiest as reversed 'node, right, left'.",
+        "The stack holds nodes you have gone past but not used yet.",
+        "Go left as far as you can, pop, use it, then step right.",
+        "Postorder is easiest as node-right-left, reversed at the end.",
       ],
       diagram: `  push all lefts
       ┌───┐
@@ -461,13 +460,13 @@ func deserialize(data string) *TreeNode {
       │ 7 │
       └───┘
   pop → visit → go right → push all its lefts`,
-      key: "The stack is exactly the recursion's call stack, made visible.",
+      key: "The stack is the call stack, written out by hand.",
     },
     templates: [
       {
         name: "Iterative inorder",
         filename: "iter_inorder.go",
-        note: "The loop form of the recursion. Stop early whenever you like.",
+        note: "The loop version of the recursion. Stop whenever you like.",
         code: `func inorderIterative(root *TreeNode) []int {
     var out []int
     stack := []*TreeNode{}
@@ -490,7 +489,7 @@ func deserialize(data string) *TreeNode {
       {
         name: "BST iterator",
         filename: "bst_iterator.go",
-        note: "Amortised O(1) per Next, O(h) space — the standard design answer.",
+        note: "O(1) per Next on average, O(h) memory. The standard design answer.",
         code: `type BSTIterator struct {
     stack []*TreeNode
 }
@@ -572,7 +571,7 @@ func postorderIterative(root *TreeNode) []int {
     slug: "binary-search-tree",
     title: "Binary Search Tree",
     category: "trees",
-    description: "An ordering invariant that turns tree navigation into binary search.",
+    description: "Smaller on the left, bigger on the right, so walking down is binary search.",
     concepts: ["Ordering", "Inorder sorted", "Bounds"],
     usedFor: ["ordered lookups", "insert and delete keeping order", "kth smallest", "range queries"],
     signals: ["binary search tree", "sorted order", "kth smallest", "validate", "successor", "insert into"],
@@ -584,9 +583,9 @@ func postorderIterative(root *TreeNode) []int {
     typicalQuestion: "Validate that a binary tree is a binary search tree.",
     mentalModel: {
       lines: [
-        "Everything in the left subtree is smaller; everything in the right is larger.",
-        "So descending compares the target with the node and picks a side.",
-        "Inorder traversal emits values in ascending order — many BST problems are that fact in disguise.",
+        "Everything on the left is smaller. Everything on the right is bigger.",
+        "So each step compares once and picks a side.",
+        "Reading it inorder gives you sorted values, which is half of these problems.",
       ],
       diagram: `           8
         /     \\
@@ -596,13 +595,13 @@ func postorderIterative(root *TreeNode) []int {
 
   search 6: 6<8 → left, 6>3 → right, found
   inorder: 1 3 6 8 10 14`,
-      key: "Validation needs an inherited (low, high) range, not a parent comparison.",
+      key: "To check a BST, carry a (low, high) range down. Comparing with children is not enough.",
     },
     templates: [
       {
         name: "Search / insert",
         filename: "bst_ops.go",
-        note: "Returning the subtree from recursion makes reattachment automatic.",
+        note: "Returning the subtree from the recursion reattaches it for you.",
         code: `func searchBST(root *TreeNode, v int) *TreeNode {
     for root != nil && root.Val != v {
         if v < root.Val {
@@ -629,7 +628,7 @@ func insertIntoBST(root *TreeNode, v int) *TreeNode {
       {
         name: "Delete",
         filename: "bst_delete.go",
-        note: "Two children: replace with the inorder successor, then delete that from the right subtree.",
+        note: "Two children: copy in the next-biggest value, then delete that one instead.",
         code: `func deleteNode(root *TreeNode, key int) *TreeNode {
     if root == nil {
         return nil
@@ -659,7 +658,7 @@ func insertIntoBST(root *TreeNode, v int) *TreeNode {
       {
         name: "Kth smallest",
         filename: "kth_smallest.go",
-        note: "Iterative inorder with an early exit — no need to traverse the whole tree.",
+        note: "Iterative inorder, stopped early. No need to walk the whole tree.",
         code: `func kthSmallest(root *TreeNode, k int) int {
     stack := []*TreeNode{}
     cur := root
@@ -719,9 +718,9 @@ func insertIntoBST(root *TreeNode, v int) *TreeNode {
     typicalQuestion: "Find the lowest common ancestor of two nodes in a binary tree.",
     mentalModel: {
       lines: [
-        "Return non-nil upward when you find either target.",
-        "The first node that receives non-nil from both sides is the split point.",
-        "In a BST it is simpler: walk down while both targets are on the same side.",
+        "Send a signal up when you find either node.",
+        "The first node that hears from both sides is the answer.",
+        "In a BST it is easier: walk down while both targets sit on the same side.",
       ],
       diagram: `        3
        / \\
@@ -731,13 +730,13 @@ func insertIntoBST(root *TreeNode, v int) *TreeNode {
 
   left returns 6, right returns 2
   → this node is the answer`,
-      key: "The LCA is where the two search paths diverge.",
+      key: "The LCA is simply where the two search paths split.",
     },
     templates: [
       {
         name: "Binary tree LCA",
         filename: "lca.go",
-        note: "Assumes both nodes exist. Otherwise you must also return a found-count.",
+        note: "Assumes both nodes exist. If not, also return how many you found.",
         code: `func lowestCommonAncestor(root, p, q *TreeNode) *TreeNode {
     if root == nil || root == p || root == q {
         return root
@@ -758,7 +757,7 @@ func insertIntoBST(root *TreeNode, v int) *TreeNode {
       {
         name: "BST LCA",
         filename: "lca_bst.go",
-        note: "Ordering removes the recursion entirely.",
+        note: "The ordering removes the recursion completely.",
         code: `func lcaBST(root, p, q *TreeNode) *TreeNode {
     for root != nil {
         switch {
@@ -776,27 +775,24 @@ func insertIntoBST(root *TreeNode, v int) *TreeNode {
       {
         name: "Binary lifting",
         filename: "binary_lifting.go",
-        note: "For many queries on a static tree: O(n log n) preprocessing, O(log n) per query.",
-        code: `const LOG = 17 // enough for n up to 131072
-
-type LCA struct {
-    up    [][LOG]int
-    depth []int
-}
+        note: "For many queries on a fixed tree: O(n log n) to build, O(log n) each.",
+        code: `// up[v][k] = the ancestor 2^k steps above v (filled in a first DFS)
+const LOG = 17
 
 func (l *LCA) Query(u, v int) int {
     if l.depth[u] < l.depth[v] {
         u, v = v, u
     }
-    diff := l.depth[u] - l.depth[v]
-    for k := 0; k < LOG; k++ {
-        if diff>>k&1 == 1 {
-            u = l.up[u][k]
-        }
+
+    // step 1: lift the deeper node to the same depth
+    for diff := l.depth[u] - l.depth[v]; diff > 0; diff &= diff - 1 {
+        u = l.up[u][bits.TrailingZeros(uint(diff))]
     }
     if u == v {
         return u
     }
+
+    // step 2: lift both as high as possible while they stay apart
     for k := LOG - 1; k >= 0; k-- {
         if l.up[u][k] != l.up[v][k] {
             u, v = l.up[u][k], l.up[v][k]
@@ -819,7 +815,7 @@ func (l *LCA) Query(u, v int) int {
     ],
     mistakes: [
       { title: "Assuming both nodes are present", detail: "The clean recursion silently returns the one node it found." },
-      { title: "Using the BST version on a general tree", detail: "Without the ordering invariant the descent is meaningless." },
+      { title: "Using the BST version on a general tree", detail: "Without the ordering rule, walking down tells you nothing." },
       { title: "Forgetting a node can be its own ancestor", detail: "LCA(5, 6) where 6 is under 5 is 5." },
     ],
     related: ["tree-dfs", "binary-search-tree", "tree-diameter", "heavy-light-decomposition"],
@@ -841,9 +837,9 @@ func (l *LCA) Query(u, v int) int {
     typicalQuestion: "Build the tree from its preorder and inorder traversals.",
     mentalModel: {
       lines: [
-        "Preorder's first element is the root; postorder's last element is the root.",
-        "Inorder tells you how many nodes lie in the left subtree.",
-        "Recurse on the two sides with the sizes you just computed.",
+        "Preorder tells you the root first. Postorder tells you the root last.",
+        "Inorder tells you how many nodes sit in the left subtree.",
+        "Put those together and recurse on both sides.",
       ],
       diagram: `  pre    [3 | 9 | 20 15 7]
           root  left   right
@@ -852,13 +848,13 @@ func (l *LCA) Query(u, v int) int {
           left root right
 
   leftSize = index of root in inorder`,
-      key: "Index the inorder positions in a map, or every level costs an O(n) scan.",
+      key: "Index the inorder positions in a map, or every node costs an O(n) scan.",
     },
     templates: [
       {
         name: "Pre + in",
         filename: "build_pre_in.go",
-        note: "The map lookup is what makes this O(n) instead of O(n²).",
+        note: "The map lookup is what makes this O(n) instead of O(n^2).",
         code: `func buildTree(preorder, inorder []int) *TreeNode {
     pos := make(map[int]int, len(inorder))
     for i, v := range inorder {
@@ -887,7 +883,7 @@ func (l *LCA) Query(u, v int) int {
       {
         name: "In + post",
         filename: "build_in_post.go",
-        note: "Consume postorder from the back, and build RIGHT before LEFT.",
+        note: "Read postorder backwards, and build the RIGHT subtree first.",
         code: `func buildTreePost(inorder, postorder []int) *TreeNode {
     pos := make(map[int]int, len(inorder))
     for i, v := range inorder {
@@ -915,7 +911,7 @@ func (l *LCA) Query(u, v int) int {
       {
         name: "Balanced from sorted",
         filename: "sorted_to_bst.go",
-        note: "The middle element as the root gives a height-balanced tree by construction.",
+        note: "Take the middle as the root and the tree comes out balanced.",
         code: `func sortedArrayToBST(nums []int) *TreeNode {
     if len(nums) == 0 {
         return nil
@@ -963,9 +959,9 @@ func (l *LCA) Query(u, v int) int {
     typicalQuestion: "Rob houses arranged in a tree without robbing two directly connected ones.",
     mentalModel: {
       lines: [
-        "Give each node a small set of states — taken / not taken, covered / uncovered.",
-        "Return one value per state from every node.",
-        "The parent combines children's states under the constraint.",
+        "Give each node a few states, like taken or not taken.",
+        "Every node reports one value per state to its parent.",
+        "The parent picks the best combination the rule allows.",
       ],
       diagram: `        node
      take │ skip
@@ -975,13 +971,13 @@ func (l *LCA) Query(u, v int) int {
 
   take = val + Σ child.skip
   skip = Σ max(child.take, child.skip)`,
-      key: "Return a tuple, one entry per state. Never a single number.",
+      key: "Return one value per state. A single number cannot express the trade-off.",
     },
     templates: [
       {
         name: "Two states",
         filename: "house_robber_iii.go",
-        note: "Return (robbed, skipped) together — one O(n) pass, no memo needed.",
+        note: "Return (take, skip) together. One pass, no memo needed.",
         code: `func rob(root *TreeNode) int {
     var dfs func(*TreeNode) (int, int) // (take, skip)
 
@@ -1003,7 +999,7 @@ func (l *LCA) Query(u, v int) int {
       {
         name: "Subtree aggregate",
         filename: "subtree_sum.go",
-        note: "General shape for graph-shaped trees: recurse over children, skipping the parent.",
+        note: "On a graph-shaped tree, pass the parent down and skip it.",
         code: `func subtreeSums(adj [][]int, vals []int) []int {
     sum := make([]int, len(adj))
 
@@ -1026,7 +1022,7 @@ func (l *LCA) Query(u, v int) int {
       {
         name: "Rerooting",
         filename: "rerooting.go",
-        note: "Two passes: sums downward, then push the outside contribution down from each parent.",
+        note: "Two passes: totals downwards, then push the outside part back down.",
         code: `// sum of distances from every node to all others
 func sumOfDistances(n int, adj [][]int) []int {
     count := make([]int, n) // subtree sizes
@@ -1068,7 +1064,7 @@ func sumOfDistances(n int, adj [][]int) []int {
       { label: "Rerooting", value: "O(n)", note: "two DFS passes" },
       { label: "Space", value: "O(h)", note: "recursion depth" },
     ],
-    why: "A tree has no cycles, so each subtree's answer is independent once the parent's decision is fixed. That independence is exactly what DP needs — and it is why tree DP requires no explicit memo table: each node is visited once.",
+    why: "A tree has no cycles, so once the parent has decided, the subtrees do not affect each other. That independence is exactly what DP needs, and it is why tree DP needs no memo table: each node is visited once.",
     variations: [
       { name: "Three states", detail: "Covering problems (tree cameras) need covered-with-camera, covered-by-child, uncovered." },
       { name: "Knapsack on trees", detail: "Merge children's DP arrays; careful sizing keeps it O(n²) rather than O(n·k²)." },
@@ -1098,22 +1094,23 @@ func sumOfDistances(n int, adj [][]int) []int {
     typicalQuestion: "Find the length of the longest path between any two nodes in a tree.",
     mentalModel: {
       lines: [
-        "Every path has a unique highest node — its bend.",
-        "At that node, the path is leftBranch + node + rightBranch.",
-        "But the parent can only use ONE branch, so return the better one and record the sum separately.",
+        "Every path turns at exactly one node.",
+        "At that node the path is left branch + node + right branch.",
+        "But the parent can only use one branch.",
+        "So record the two-branch total, and return only the better branch.",
       ],
       diagram: `        bend
        /    \\
    left      right      ← recorded globally
       ↑
    return max(left, right) + 1 to the parent`,
-      key: "Record the two-branch answer; return the one-branch value.",
+      key: "Record the answer with both branches. Return only one.",
     },
     templates: [
       {
         name: "Diameter",
         filename: "diameter.go",
-        note: "The closure captures best; the return value is the depth.",
+        note: "The closure holds the best. The return value is just the depth.",
         code: `func diameterOfBinaryTree(root *TreeNode) int {
     best := 0
 
@@ -1136,7 +1133,7 @@ func sumOfDistances(n int, adj [][]int) []int {
       {
         name: "Maximum path sum",
         filename: "max_path_sum.go",
-        note: "Negative branches are dropped with max(0, …) — taking nothing is always allowed.",
+        note: "A negative branch is dropped with max(0, ...): taking nothing is allowed.",
         code: `func maxPathSum(root *TreeNode) int {
     best := math.MinInt
 
@@ -1159,7 +1156,7 @@ func sumOfDistances(n int, adj [][]int) []int {
       {
         name: "Diameter by double BFS",
         filename: "double_bfs.go",
-        note: "On a general (unweighted) tree: farthest from any node, then farthest from that.",
+        note: "Farthest node from anywhere, then farthest from there.",
         code: `func treeDiameter(adj [][]int) int {
     farthest := func(src int) (node, dist int) {
         d := make([]int, len(adj))
@@ -1197,7 +1194,7 @@ func sumOfDistances(n int, adj [][]int) []int {
       { label: "Double BFS", value: "O(n)", note: "two passes over a general tree" },
       { label: "Space", value: "O(h)", note: "O(n) for the BFS variant" },
     ],
-    why: "The double-BFS trick works because the farthest node from any starting point is always an endpoint of some diameter. Once you have one endpoint, the farthest node from it is the other end.",
+    why: "Picking any node and walking to the farthest node always lands on one end of a longest path. From there, the farthest node is the other end, which is why two BFS passes find the diameter.",
     variations: [
       { name: "Weighted edges", detail: "Same recursion, adding edge weights instead of one per level." },
       { name: "Tree centre", detail: "Peel leaves layer by layer; the last one or two nodes are the centres." },
@@ -1228,9 +1225,9 @@ func sumOfDistances(n int, adj [][]int) []int {
     typicalQuestion: "Implement insert, search and startsWith for a dictionary of words.",
     mentalModel: {
       lines: [
-        "Each edge is a character; each node is a prefix.",
-        "Lookup cost depends on the word length, never on the dictionary size.",
-        "A terminal flag marks a node as the end of a real word.",
+        "Each edge is a letter. Each node is a prefix.",
+        "Looking a word up costs its length, no matter how many words you stored.",
+        "A flag on the node marks where a real word ends.",
       ],
       diagram: `        (root)
         /    \\
@@ -1242,13 +1239,13 @@ func sumOfDistances(n int, adj [][]int) []int {
      ●   ●
 
   ● = end of word`,
-      key: "A trie turns 'does any word start with this?' into a walk, not a scan.",
+      key: "A trie turns 'does any word start with this?' into a short walk.",
     },
     templates: [
       {
         name: "Trie",
         filename: "trie.go",
-        note: "A 26-slot array beats a map for lowercase input — no hashing, better locality.",
+        note: "A 26-slot array beats a map for a-z: no hashing, better cache behaviour.",
         code: `type Trie struct {
     children [26]*Trie
     isWord   bool
@@ -1289,7 +1286,7 @@ func (t *Trie) StartsWith(prefix string) bool {
       {
         name: "Wildcard search",
         filename: "wildcard_trie.go",
-        note: "A '.' forks into every existing child.",
+        note: "A '.' splits the search into every child that exists.",
         code: `func (t *Trie) SearchWild(word string) bool {
     var dfs func(node *Trie, i int) bool
 
@@ -1317,7 +1314,7 @@ func (t *Trie) StartsWith(prefix string) bool {
       {
         name: "Binary trie",
         filename: "xor_trie.go",
-        note: "Insert the bits of each number; greedily take the opposite bit to maximise XOR.",
+        note: "Store the bits of each number, then greedily take the opposite bit.",
         code: `type BitTrie struct{ child [2]*BitTrie }
 
 const BITS = 31
@@ -1351,7 +1348,7 @@ func (t *BitTrie) MaxXor(x int) int {
       {
         name: "Trie + grid DFS",
         filename: "word_search_ii.go",
-        note: "Walk the board and the trie together; a missing child prunes instantly.",
+        note: "Walk the board and the trie together. A missing child stops you instantly.",
         code: `func findWords(board [][]byte, words []string) []string {
     root := &Trie{}
     for _, w := range words {
@@ -1366,23 +1363,25 @@ func (t *BitTrie) MaxXor(x int) int {
             return
         }
         ch := board[r][c]
-        if ch == '#' || node.children[ch-'a'] == nil {
-            return
+        if ch == '#' {
+            return // already on the current path
         }
-        node = node.children[ch-'a']
+        next := node.children[ch-'a']
+        if next == nil {
+            return // no word starts like this: stop early
+        }
+
         path = append(path, ch)
-
-        if node.isWord {
+        if next.isWord {
             out = append(out, string(path))
-            node.isWord = false // de-duplicate
+            next.isWord = false // do not report it twice
         }
 
-        board[r][c] = '#' // mark visited
-        dfs(r+1, c, node, path)
-        dfs(r-1, c, node, path)
-        dfs(r, c+1, node, path)
-        dfs(r, c-1, node, path)
-        board[r][c] = ch // restore
+        board[r][c] = '#'
+        for _, d := range dirs {
+            dfs(r+d[0], c+d[1], next, path)
+        }
+        board[r][c] = ch
     }
 
     for r := range board {
@@ -1398,7 +1397,7 @@ func (t *BitTrie) MaxXor(x int) int {
       { label: "Insert", value: "O(L)", note: "L = word length" },
       { label: "Search", value: "O(L)" },
       { label: "Prefix query", value: "O(L)" },
-      { label: "Space", value: "O(total chars × alphabet)", note: "a map per node trades speed for memory" },
+      { label: "Space", value: "O(total chars × alphabet)", note: "a map per node saves memory, costs speed" },
     ],
     variations: [
       { name: "Map children", detail: "map[byte]*Trie for large or unknown alphabets." },
@@ -1423,16 +1422,16 @@ func (t *BitTrie) MaxXor(x int) int {
     usedFor: ["range min/max/sum with updates", "range assignment", "any associative range query"],
     signals: ["range query", "update an element", "range max", "range assign", "online queries", "mutable array"],
     recognition: [
-      "you need range queries on an array that also changes",
-      "the operation is associative but not invertible — min, max, gcd (prefix sums won't work)",
-      "range updates as well as range queries — you need lazy propagation",
+      "you need range answers on an array that also changes",
+      "the thing you combine cannot be undone by subtracting: min, max, gcd",
+      "you need to update whole ranges as well as read them, so you need lazy updates",
     ],
     typicalQuestion: "Support range sum queries and point updates on a mutable array.",
     mentalModel: {
       lines: [
-        "Each node stores the aggregate of one contiguous range.",
-        "A query splits into O(log n) maximal nodes that tile the range exactly.",
-        "An update touches one root-to-leaf path.",
+        "Each node holds the answer for one slice of the array.",
+        "Any range you ask for is covered by about log n of those nodes.",
+        "An update touches one path from a leaf to the root.",
       ],
       diagram: `            [0..7]
           /        \\
@@ -1441,14 +1440,15 @@ func (t *BitTrie) MaxXor(x int) int {
   [0..1] [2..3] [4..5] [6..7]
 
   query [1..5] = [1] + [2..3] + [4..5]`,
-      key: "Use a segment tree when prefix sums fail — because of updates, or because the operation has no inverse.",
+      key: "Use it when prefix sums fail: because of updates, or because min and max cannot be undone.",
     },
     templates: [
       {
         name: "Iterative sum tree",
         filename: "segment_tree.go",
-        note: "The bottom-up form: shortest correct implementation, no recursion.",
-        code: `type SegTree struct {
+        note: "The bottom-up form. Shortest correct version, no recursion.",
+        code: `// leaves live at tree[n..2n). A node's parent is always at i/2.
+type SegTree struct {
     n    int
     tree []int
 }
@@ -1491,15 +1491,15 @@ func (s *SegTree) Query(l, r int) int {
       {
         name: "Recursive with lazy",
         filename: "lazy_segment_tree.go",
-        note: "Range add plus range max. push() applies and forwards the pending delta.",
-        code: `type Lazy struct {
-    n    int
-    tree []int
-    lazy []int
+        note: "push() pays the debt on a node and passes it to the children.",
+        code: `// range add, range max. lazy[node] is an increment owed to that whole range.
+type Lazy struct {
+    tree, lazy []int
+    n          int
 }
 
 func NewLazy(n int) *Lazy {
-    return &Lazy{n: n, tree: make([]int, 4*n), lazy: make([]int, 4*n)}
+    return &Lazy{tree: make([]int, 4*n), lazy: make([]int, 4*n), n: n}
 }
 
 func (s *Lazy) push(node, lo, hi int) {
@@ -1507,7 +1507,7 @@ func (s *Lazy) push(node, lo, hi int) {
         return
     }
     s.tree[node] += s.lazy[node]
-    if lo != hi {
+    if lo != hi { // pass the debt to the children
         s.lazy[2*node] += s.lazy[node]
         s.lazy[2*node+1] += s.lazy[node]
     }
@@ -1519,7 +1519,7 @@ func (s *Lazy) Add(node, lo, hi, l, r, v int) {
     if r < lo || hi < l {
         return
     }
-    if l <= lo && hi <= r {
+    if l <= lo && hi <= r { // fully covered: record and stop
         s.lazy[node] += v
         s.push(node, lo, hi)
         return
@@ -1528,18 +1528,6 @@ func (s *Lazy) Add(node, lo, hi, l, r, v int) {
     s.Add(2*node, lo, mid, l, r, v)
     s.Add(2*node+1, mid+1, hi, l, r, v)
     s.tree[node] = max(s.tree[2*node], s.tree[2*node+1])
-}
-
-func (s *Lazy) Max(node, lo, hi, l, r int) int {
-    s.push(node, lo, hi)
-    if r < lo || hi < l {
-        return math.MinInt
-    }
-    if l <= lo && hi <= r {
-        return s.tree[node]
-    }
-    mid := (lo + hi) / 2
-    return max(s.Max(2*node, lo, mid, l, r), s.Max(2*node+1, mid+1, hi, l, r))
 }`,
       },
     ],
@@ -1551,7 +1539,7 @@ func (s *Lazy) Max(node, lo, hi, l, r int) int {
       { label: "Space", value: "O(n)", note: "4n for the recursive form" },
     ],
     variations: [
-      { name: "Any associative merge", detail: "Swap + for min, max, gcd or matrix multiplication — only the combine function changes." },
+      { name: "Any combining rule", detail: "Swap + for min, max or gcd. Only the combine function changes." },
       { name: "Lazy propagation", detail: "Needed for range updates; store the pending operation per node." },
       { name: "Merge sort tree", detail: "Each node keeps a sorted list, enabling 'count elements < x in range'." },
       { name: "Fenwick instead", detail: "For prefix sums with point updates, a BIT is shorter and faster." },
@@ -1574,16 +1562,16 @@ func (s *Lazy) Max(node, lo, hi, l, r int) int {
     usedFor: ["prefix sums with updates", "counting inversions", "rank queries", "2D point counting"],
     signals: ["prefix sum with updates", "count smaller after self", "inversions", "rank", "count elements less than"],
     recognition: [
-      "prefix sums are enough — you never need an arbitrary non-prefix range that is not a difference",
-      "you are counting inversions or elements smaller than the current one",
-      "values need compressing first, then counting by rank",
+      "you only ever need totals from the start, or the difference of two of them",
+      "you are counting inversions, or elements smaller than the current one",
+      "the values are huge, so compress them into ranks first",
     ],
     typicalQuestion: "Support point updates and prefix sum queries on an array.",
     mentalModel: {
       lines: [
-        "Node i covers a block of length (i & -i) ending at i.",
-        "Query walks down by clearing the lowest set bit; update walks up by adding it.",
-        "Both paths have at most log n steps.",
+        "Node i covers a block of size (i & -i) ending at i.",
+        "A query walks down by clearing the lowest set bit.",
+        "An update walks up by adding it. Both take log n steps.",
       ],
       diagram: `  i      binary   covers
   8      1000     [1..8]
@@ -1592,7 +1580,7 @@ func (s *Lazy) Max(node, lo, hi, l, r int) int {
 
   query(7) = tree[7] + tree[6] + tree[4]
   7 → 6 → 4 → 0   (clear the lowest bit)`,
-      key: "1-indexed. Always. Index 0 has no lowest set bit and the loop never terminates.",
+      key: "1-indexed, always. Index 0 has no lowest set bit, so the loop never ends.",
     },
     templates: [
       {
@@ -1631,7 +1619,7 @@ func (b *BIT) Range(l, r int) int {
       {
         name: "Counting inversions",
         filename: "inversions.go",
-        note: "Compress values, then count how many larger values were already seen.",
+        note: "Compress the values, then count how many smaller ones you have seen.",
         code: `func countInversions(nums []int) int {
     ranks, distinct := compress(nums)
     bit := NewBIT(len(distinct))
@@ -1647,7 +1635,7 @@ func (b *BIT) Range(l, r int) int {
       {
         name: "Find by prefix",
         filename: "bit_search.go",
-        note: "Binary lifting on the BIT: the smallest index with prefix sum >= target, in O(log n).",
+        note: "Smallest index whose running total reaches the target, in O(log n).",
         code: `func (b *BIT) LowerBound(target int) int {
     pos, rest := 0, target
     for step := 1 << bits.Len(uint(b.n)); step > 0; step >>= 1 {
@@ -1696,9 +1684,10 @@ func (b *BIT) Range(l, r int) int {
     typicalQuestion: "Sum the values on the path between u and v, with updates in between.",
     mentalModel: {
       lines: [
-        "From each node, the child with the largest subtree is 'heavy'; the rest are 'light'.",
-        "Heavy edges form chains. Going down a light edge at least halves the subtree size.",
-        "So any root-to-node path crosses at most log n chains.",
+        "From each node, the child with the biggest subtree is the 'heavy' one.",
+        "Heavy edges link up into chains.",
+        "Stepping off a chain at least halves the subtree.",
+        "So any path crosses only about log n chains.",
       ],
       diagram: `  chain 1: ●─●─●─●
                  └ light
@@ -1708,13 +1697,13 @@ func (b *BIT) Range(l, r int) int {
 
   path u→v = O(log n) chain segments
   each segment = one segment tree range query`,
-      key: "Flatten each chain into contiguous positions, then every chain segment is one range query.",
+      key: "Lay each chain out in a row, and every chunk of a path is one range query.",
     },
     templates: [
       {
         name: "Decomposition",
         filename: "hld.go",
-        note: "Two DFS passes: sizes and heavy children, then chain heads and positions.",
+        note: "Two passes: subtree sizes and heavy children, then chain heads and positions.",
         code: `type HLD struct {
     parent, depth, heavy, head, pos []int
     cur                             int
@@ -1756,7 +1745,7 @@ func (h *HLD) decompose(u, chainHead int, adj [][]int) {
       {
         name: "Path query",
         filename: "hld_query.go",
-        note: "Climb the deeper chain head each round; each jump is one segment tree query.",
+        note: "Climb the deeper chain head each round. Each jump is one range query.",
         code: `func (h *HLD) PathQuery(u, v int, seg *SegTree) int {
     res := 0
     for h.head[u] != h.head[v] {
@@ -1776,11 +1765,11 @@ func (h *HLD) decompose(u, chainHead int, adj [][]int) {
     ],
     complexity: [
       { label: "Build", value: "O(n)" },
-      { label: "Path query", value: "O(log² n)", note: "log n chains × log n per segment tree query" },
-      { label: "Subtree query", value: "O(log n)", note: "a subtree is one contiguous position range" },
+      { label: "Path query", value: "O(log² n)", note: "log n chains, log n per range query" },
+      { label: "Subtree query", value: "O(log n)", note: "a subtree is one run of positions" },
       { label: "Space", value: "O(n)" },
     ],
-    why: "Descending a light edge means entering a subtree of at most half the size, so at most log n light edges lie on any root-to-node path. Between them the path stays inside one heavy chain, which is contiguous in the flattened order.",
+    why: "Going down a light edge means entering a subtree at most half the size, so a path from the root can only do that log n times. In between, the path stays inside one chain, and a chain is stored as one contiguous block.",
     variations: [
       { name: "Edge values", detail: "Store each edge's value at its deeper endpoint and exclude the LCA from the final segment." },
       { name: "Subtree queries", detail: "The DFS order makes a subtree a contiguous range — one query, no chains needed." },

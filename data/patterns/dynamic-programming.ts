@@ -18,10 +18,10 @@ export const dynamicProgramming: Pattern[] = [
     typicalQuestion: "Rob houses without robbing two adjacent ones — what is the maximum?",
     mentalModel: {
       lines: [
-        "State: what does dp[i] mean? Answer that in one sentence before writing code.",
-        "Transition: how does dp[i] follow from dp[i-1], dp[i-2], …?",
-        "Base: what are dp[0] and dp[1]?",
-        "Order: left to right, because every dependency is to the left.",
+        "Say in one sentence what dp[i] means. Write it down before any code.",
+        "Then ask how dp[i] follows from dp[i-1] and dp[i-2].",
+        "Fill in the first one or two by hand and sweep left to right.",
+        "If only the last few matter, keep variables instead of an array.",
       ],
       diagram: `  dp[i] = f(dp[i-1], dp[i-2])
 
@@ -30,7 +30,7 @@ export const dynamicProgramming: Pattern[] = [
 
   only a constant window matters
   → keep two variables, not an array`,
-      key: "Write the state definition as a comment first. Most DP bugs are a vague state.",
+      key: "Write the meaning of dp[i] as a comment first. Most DP bugs are a fuzzy definition.",
     },
     templates: [
       {
@@ -49,7 +49,7 @@ func rob(nums []int) int {
       {
         name: "Counting ways",
         filename: "decode_ways.go",
-        note: "Additive transitions count arrangements; guard the invalid cases explicitly.",
+        note: "Adding instead of taking a max counts arrangements.",
         code: `func numDecodings(s string) int {
     if len(s) == 0 || s[0] == '0' {
         return 0
@@ -72,7 +72,7 @@ func rob(nums []int) int {
       {
         name: "O(n²) LIS",
         filename: "lis_quadratic.go",
-        note: "dp[i] = longest increasing subsequence ENDING at i. Easy to extend.",
+        note: "dp[i] is the longest run ENDING at i. Easy to extend later.",
         code: `func lengthOfLIS(nums []int) int {
     dp := make([]int, len(nums))
     best := 0
@@ -92,7 +92,7 @@ func rob(nums []int) int {
       {
         name: "Reachability DP",
         filename: "word_break.go",
-        note: "dp[i] = can the first i characters be segmented?",
+        note: "dp[i] answers: can the first i characters be split up?",
         code: `func wordBreak(s string, wordDict []string) bool {
     words := map[string]bool{}
     maxLen := 0
@@ -120,7 +120,7 @@ func rob(nums []int) int {
       { label: "Simple transitions", value: "O(n)" },
       { label: "LIS quadratic", value: "O(n²)" },
       { label: "LIS with binary search", value: "O(n log n)" },
-      { label: "Space", value: "O(1) – O(n)", note: "O(1) when only a fixed window is needed" },
+      { label: "Space", value: "O(1) – O(n)", note: "O(1) if only the last few matter" },
     ],
     variations: [
       { name: "Circular arrays", detail: "Run the linear version twice with one end excluded each time." },
@@ -153,9 +153,10 @@ func rob(nums []int) int {
     typicalQuestion: "How many unique paths are there from the top-left to the bottom-right?",
     mentalModel: {
       lines: [
-        "dp[r][c] = the answer for the subproblem ending at that cell.",
-        "Fill in an order that respects the dependency direction — usually top-left to bottom-right.",
-        "If each row only needs the row above, one array is enough.",
+        "dp[r][c] is the answer for the path ending at that cell.",
+        "Fill the grid in an order where the cells you need are already done.",
+        "Usually that means top-left to bottom-right.",
+        "If a row only needs the row above, one array is enough.",
       ],
       diagram: `  ┌───┬───┬───┐
   │ 1 │ 1 │ 1 │
@@ -164,13 +165,13 @@ func rob(nums []int) int {
   ├───┼───┼───┤
   │ 1 │ 3 │ 6 │
   └───┴───┴───┘`,
-      key: "Initialise the first row and column separately, or handle boundaries inside the loop.",
+      key: "Set up the first row and column separately, or handle the edges inside the loop.",
     },
     templates: [
       {
         name: "Rolling row",
         filename: "unique_paths.go",
-        note: "O(cols) space: dp[c] holds the row above until it is overwritten.",
+        note: "dp[c] still holds the row above until you overwrite it.",
         code: `func uniquePaths(m, n int) int {
     dp := make([]int, n)
     for i := range dp {
@@ -188,7 +189,7 @@ func rob(nums []int) int {
       {
         name: "Minimum path",
         filename: "min_path_sum.go",
-        note: "In-place over the input when mutation is allowed.",
+        note: "Write straight into the input when you are allowed to.",
         code: `func minPathSum(grid [][]int) int {
     rows, cols := len(grid), len(grid[0])
 
@@ -212,7 +213,7 @@ func rob(nums []int) int {
       {
         name: "Maximal square",
         filename: "maximal_square.go",
-        note: "The three-corner minimum: a square can only be as big as its weakest corner allows.",
+        note: "A square is only as big as its weakest of three corners allows.",
         code: `func maximalSquare(matrix [][]byte) int {
     rows, cols := len(matrix), len(matrix[0])
     dp := make([][]int, rows+1)
@@ -235,7 +236,7 @@ func rob(nums []int) int {
       {
         name: "Bottom-up triangle",
         filename: "triangle.go",
-        note: "Working upward removes every boundary check.",
+        note: "Working upwards removes every edge check.",
         code: `func minimumTotal(triangle [][]int) int {
     dp := append([]int(nil), triangle[len(triangle)-1]...)
 
@@ -285,9 +286,9 @@ func rob(nums []int) int {
     typicalQuestion: "What is the minimum number of edits to turn word1 into word2?",
     mentalModel: {
       lines: [
-        "dp[i][j] covers the first i characters of a and the first j of b.",
-        "If a[i-1] == b[j-1], the problem shrinks diagonally.",
-        "Otherwise take the best of the moves you are allowed.",
+        "dp[i][j] is about the first i letters of one string and the first j of the other.",
+        "If the two current letters match, the problem shrinks diagonally.",
+        "If not, take the best of the moves you are allowed.",
       ],
       diagram: `        ""  b  b  c
     ""   0  1  2  3
@@ -296,13 +297,13 @@ func rob(nums []int) int {
 
   match    → dp[i-1][j-1]
   mismatch → 1 + min(↑, ←, ↖)`,
-      key: "Index i in the DP means 'first i characters', so the string index is i-1.",
+      key: "dp index i means 'first i letters', so the letter itself is at index i-1.",
     },
     templates: [
       {
         name: "LCS",
         filename: "lcs.go",
-        note: "The parent recurrence of nearly every two-string DP.",
+        note: "The parent of almost every two-string DP.",
         code: `func longestCommonSubsequence(a, b string) int {
     dp := make([][]int, len(a)+1)
     for i := range dp {
@@ -324,7 +325,7 @@ func rob(nums []int) int {
       {
         name: "Edit distance",
         filename: "edit_distance.go",
-        note: "Three operations, three neighbouring cells.",
+        note: "Three operations map to the three neighbouring cells.",
         code: `func minDistance(a, b string) int {
     dp := make([][]int, len(a)+1)
     for i := range dp {
@@ -352,7 +353,7 @@ func rob(nums []int) int {
       {
         name: "Rolling rows",
         filename: "lcs_rolling.go",
-        note: "Only two rows are ever live — O(min(m,n)) space.",
+        note: "Only two rows are ever alive, so swap them instead of copying.",
         code: `func lcsSpaceOptimised(a, b string) int {
     if len(a) < len(b) {
         a, b = b, a // keep the inner dimension small
@@ -376,7 +377,7 @@ func rob(nums []int) int {
       {
         name: "Wildcard matching",
         filename: "regex_dp.go",
-        note: "'*' either consumes nothing (skip the pair) or one more character (stay).",
+        note: "A star either takes nothing, or eats one more character and stays.",
         code: `func isMatch(s, p string) bool {
     dp := make([][]bool, len(s)+1)
     for i := range dp {
@@ -443,10 +444,9 @@ func rob(nums []int) int {
     typicalQuestion: "Maximise profit with at most k stock transactions.",
     mentalModel: {
       lines: [
-        "Name the states. Draw the arrows. Write one line per arrow.",
-        "hold = the best balance while owning a share.",
-        "free = the best balance while owning nothing.",
-        "Every constraint is a new state or a blocked arrow.",
+        "Name the situations you can be in. Holding a share, or not.",
+        "Draw the arrows between them and write one line per arrow.",
+        "A new rule, like a cooldown, means a new state, not a new loop.",
       ],
       diagram: `      buy
   free ──▶ hold
@@ -456,13 +456,13 @@ func rob(nums []int) int {
 
   cooldown adds a third state:
   hold ─sell─▶ sold ─rest─▶ free`,
-      key: "Adding a constraint means adding a state — not another loop.",
+      key: "Every constraint becomes another state or a blocked arrow.",
     },
     templates: [
       {
         name: "Two states",
         filename: "stock_ii.go",
-        note: "Unlimited transactions: two variables, one pass.",
+        note: "Unlimited trades: two variables, one pass.",
         code: `func maxProfit(prices []int) int {
     hold, free := math.MinInt, 0
 
@@ -476,7 +476,7 @@ func rob(nums []int) int {
       {
         name: "Cooldown",
         filename: "stock_cooldown.go",
-        note: "Three states. Update from the PREVIOUS day's values, not the current ones.",
+        note: "Three states. Update from yesterday's values, not today's.",
         code: `func maxProfitCooldown(prices []int) int {
     hold, sold, rest := math.MinInt, math.MinInt, 0
 
@@ -492,7 +492,7 @@ func rob(nums []int) int {
       {
         name: "k transactions",
         filename: "stock_iv.go",
-        note: "2k states. Updating in order lets each transaction see the previous one's result.",
+        note: "2k states. Updating them in order lets each trade see the one before.",
         code: `func maxProfitK(k int, prices []int) int {
     if k >= len(prices)/2 { // effectively unlimited
         return maxProfit(prices)
@@ -516,7 +516,7 @@ func rob(nums []int) int {
       {
         name: "Transaction fee",
         filename: "stock_fee.go",
-        note: "Charge the fee once per round trip — on the sell side here.",
+        note: "Charge the fee on one side of the trade only.",
         code: `func maxProfitFee(prices []int, fee int) int {
     hold, free := -prices[0], 0
 
@@ -533,7 +533,7 @@ func rob(nums []int) int {
       { label: "k transactions", value: "O(n · k)" },
       { label: "Space", value: "O(1)", note: "O(k) for the k-transaction form" },
     ],
-    why: "The state captures everything about the past that affects the future. Once you have that, the transition is local and the optimal substructure is automatic — which is why naming the states correctly solves the problem.",
+    why: "A state has to capture everything about the past that still matters. Once it does, each step only looks at the step before it, and that is what makes the DP correct.",
     variations: [
       { name: "Cooldown of length m", detail: "Generalises to m rest states, or a lookback of m days." },
       { name: "Paint house / colouring", detail: "One state per colour, with transitions forbidding repeats." },
@@ -565,10 +565,10 @@ func rob(nums []int) int {
     typicalQuestion: "Maximise the coins from bursting all balloons, given neighbours change as you go.",
     mentalModel: {
       lines: [
-        "dp[i][j] = the best answer for the range i..j.",
-        "Iterate by increasing length so shorter ranges are ready.",
-        "The transition picks a split k inside the range.",
-        "When actions change the neighbourhood, think about the LAST action, not the first.",
+        "dp[i][j] is the answer for the stretch from i to j.",
+        "Work through short stretches first so longer ones can use them.",
+        "Inside a stretch, try every split point.",
+        "When your moves change the neighbours, think about the LAST move, not the first.",
       ],
       diagram: `  length 1:  [i..i]
   length 2:  [i..i+1]
@@ -576,7 +576,7 @@ func rob(nums []int) int {
                  dp[i][k-1] + cost(k) + dp[k+1][j]
 
   fill by increasing L`,
-      key: "Choosing the last action keeps the subranges independent; choosing the first does not.",
+      key: "Choosing the last move keeps the two halves independent. Choosing the first does not.",
     },
     templates: [
       {
@@ -612,7 +612,7 @@ func rob(nums []int) int {
       {
         name: "Burst balloons",
         filename: "burst_balloons.go",
-        note: "Pad with 1s. k is the LAST balloon burst, so its neighbours are exactly i-1 and j+1.",
+        note: "Pad with 1s. k is the LAST one burst, so its neighbours are i-1 and j+1.",
         code: `func maxCoins(nums []int) int {
     n := len(nums)
     v := make([]int, n+2)
@@ -639,7 +639,7 @@ func rob(nums []int) int {
       {
         name: "Palindromic range",
         filename: "longest_pal_subseq.go",
-        note: "Endpoints match: the inner range plus two. Otherwise drop one end.",
+        note: "Ends match, so add two to the inside. Otherwise drop one end.",
         code: `func longestPalindromeSubseq(s string) int {
     n := len(s)
     dp := make([][]int, n)
@@ -667,7 +667,7 @@ func rob(nums []int) int {
       { label: "Space", value: "O(n²)" },
       { label: "With Knuth optimisation", value: "O(n²)", note: "when the split point is monotone" },
     ],
-    why: "Bursting a balloon first makes its neighbours adjacent, so the two sides are no longer independent subproblems. Choosing which balloon is burst LAST fixes its neighbours as the range's boundaries — and the two sides never interact again.",
+    why: "If you burst a balloon first, its neighbours become adjacent and the two sides stop being separate problems. If you decide which balloon goes last, its neighbours are pinned to the ends of the range forever, and the halves never interact.",
     variations: [
       { name: "Merge stones", detail: "Splits must respect a fixed group size, adding a third state dimension." },
       { name: "Minimax intervals", detail: "Guess-number-higher-or-lower II takes min over guesses of max over outcomes." },
@@ -699,10 +699,10 @@ func rob(nums []int) int {
     typicalQuestion: "How many integers up to N have no two consecutive ones in binary?",
     mentalModel: {
       lines: [
-        "Build the number one digit at a time from the most significant end.",
-        "tight = every digit so far equals N's prefix, so this digit is capped.",
-        "started = we have placed a non-zero digit, which matters for leading zeroes.",
-        "Memoise on (pos, state, tight, started).",
+        "Build the number one digit at a time, from the left.",
+        "While every digit so far matches n, this digit is capped. That is 'tight'.",
+        "Once you go below n, the rest is free and the count can be reused.",
+        "Count up to hi, count up to lo-1, subtract.",
       ],
       diagram: `  N = 3 4 7
 
@@ -711,32 +711,29 @@ func rob(nums []int) int {
      if we pick <3 → free below
 
   once free: digits 0..9 at every position`,
-      key: "Only the tight branch is constrained. Everything below it is a clean, memoisable subproblem.",
+      key: "Only the tight path is limited. Everything below it is a plain, reusable subproblem.",
     },
     templates: [
       {
         name: "Digit DP skeleton",
         filename: "digit_dp.go",
-        note: "Memoise only the non-tight, started states — the tight path is visited once per position.",
-        code: `func countUpTo(n int, ok func(prev, d int) bool) int {
-    digits := []int{}
+        note: "Only cache the free case. Tight results depend on n's own digits.",
+        code: `// how many numbers in [0, n] have digits that satisfy ok(previous, current)?
+func countUpTo(n int, ok func(prev, d int) bool) int {
+    var digits []int
     for x := n; x > 0; x /= 10 {
         digits = append(digits, x%10)
     }
     slices.Reverse(digits)
 
-    // memo[pos][prev] for the free, started case
-    memo := map[[2]int]int{}
+    memo := map[[2]int]int{} // only valid once we are no longer tight
 
-    var rec func(pos, prev int, tight, started bool) int
-    rec = func(pos, prev int, tight, started bool) int {
+    var rec func(pos, prev int, tight bool) int
+    rec = func(pos, prev int, tight bool) int {
         if pos == len(digits) {
-            if started {
-                return 1
-            }
-            return 0
+            return 1
         }
-        if !tight && started {
+        if !tight {
             if v, hit := memo[[2]int{pos, prev}]; hit {
                 return v
             }
@@ -744,42 +741,38 @@ func rob(nums []int) int {
 
         limit := 9
         if tight {
-            limit = digits[pos]
+            limit = digits[pos] // still glued to n
         }
 
         total := 0
         for d := 0; d <= limit; d++ {
-            if started && !ok(prev, d) {
-                continue
+            if ok(prev, d) {
+                total += rec(pos+1, d, tight && d == limit)
             }
-            nStarted := started || d > 0
-            nPrev := prev
-            if nStarted {
-                nPrev = d
-            }
-            total += rec(pos+1, nPrev, tight && d == limit, nStarted)
         }
 
-        if !tight && started {
+        if !tight {
             memo[[2]int{pos, prev}] = total
         }
         return total
     }
 
-    return rec(0, -1, true, false)
+    return rec(0, -1, true)
 }`,
       },
       {
         name: "Binary digit DP",
         filename: "no_consecutive_ones.go",
-        note: "Same shape in base 2: the state is the previous bit.",
-        code: `func findIntegers(n int) int {
-    bits := []int{}
+        note: "Identical shape in base 2, with the previous bit as the state.",
+        code: `// same shape in base 2: the state is the previous bit
+func findIntegers(n int) int {
+    var bits []int
     for i := 30; i >= 0; i-- {
         bits = append(bits, n>>i&1)
     }
 
     memo := map[[2]int]int{}
+
     var rec func(pos, prev int, tight bool) int
     rec = func(pos, prev int, tight bool) int {
         if pos == len(bits) {
@@ -799,7 +792,7 @@ func rob(nums []int) int {
         total := 0
         for b := 0; b <= limit; b++ {
             if prev == 1 && b == 1 {
-                continue // no consecutive ones
+                continue // no two ones in a row
             }
             total += rec(pos+1, b, tight && b == limit)
         }
@@ -816,7 +809,7 @@ func rob(nums []int) int {
       {
         name: "Range counting",
         filename: "range_count.go",
-        note: "Counting in [lo, hi] is always two calls and a subtraction.",
+        note: "Counting inside [lo, hi] is always two calls and a subtraction.",
         code: `func countInRange(lo, hi int) int {
     return countUpTo(hi) - countUpTo(lo-1)
 }`,
@@ -858,9 +851,10 @@ func rob(nums []int) int {
     typicalQuestion: "What is the shortest path that visits every node?",
     mentalModel: {
       lines: [
-        "Bit i of the mask means item i is done.",
-        "dp[mask] (sometimes dp[mask][last]) is the best way to reach that set.",
-        "Iterate masks in increasing order — submasks are always smaller integers.",
+        "With n at most 20, a set of items fits in one integer.",
+        "Bit i on means item i is done.",
+        "Go through the masks in increasing order: a smaller mask is always ready first.",
+        "popcount(mask) often tells you how far along you are, for free.",
       ],
       diagram: `  n = 4
 
@@ -869,7 +863,7 @@ func rob(nums []int) int {
 
   transition: for each unused bit i
       dp[mask | 1<<i] ← dp[mask] + cost`,
-      key: "popcount(mask) is often a free dimension — it tells you how far along you are.",
+      key: "n around 20 plus 'which ones have I used' is the bitmask signature.",
     },
     templates: [
       {
@@ -892,7 +886,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "Assignment DP",
         filename: "assignment.go",
-        note: "popcount(mask) is the person being assigned, so no second dimension is needed.",
+        note: "popcount(mask) is the person being assigned, so no second dimension.",
         code: `func minCostAssign(cost [][]int) int {
     n := len(cost)
     full := 1<<n - 1
@@ -922,7 +916,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "TSP / visit all",
         filename: "tsp.go",
-        note: "Two dimensions: which nodes are visited, and where you currently stand.",
+        note: "Two parts to the state: what you have visited, and where you stand.",
         code: `func shortestPathVisitingAll(graph [][]int) int {
     n := len(graph)
     full := 1<<n - 1
@@ -962,7 +956,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "Submask enumeration",
         filename: "submask.go",
-        note: "Summed over all masks this is O(3^n), not O(4^n) — the standard set-cover bound.",
+        note: "Over all masks this is O(3^n), not O(4^n).",
         code: `func minPartitions(n int, valid func(mask int) bool) int {
     full := 1<<n - 1
     dp := make([]int, full+1)
@@ -985,7 +979,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       { label: "Subset DP", value: "O(2^n · n)" },
       { label: "TSP", value: "O(2^n · n²)" },
       { label: "Submask enumeration", value: "O(3^n)" },
-      { label: "Space", value: "O(2^n)", note: "or O(2^n · n) with a position dimension" },
+      { label: "Space", value: "O(2^n)", note: "or 2^n x n with a position too" },
     ],
     variations: [
       { name: "Profile DP", detail: "Tiling problems carry a mask describing the boundary between processed and unprocessed cells." },
@@ -1019,9 +1013,10 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
     typicalQuestion: "Maximise value within a weight capacity, using each item at most once.",
     mentalModel: {
       lines: [
-        "dp[c] = the best value achievable with capacity exactly c (or at most c).",
-        "For each item, consider every capacity — but go DOWNWARD.",
-        "Downward means dp[c-w] is still from the previous item, so the item is used once.",
+        "dp[c] is the best you can do with capacity c.",
+        "For each item, walk the capacities DOWNWARDS.",
+        "Going down means dp[c-w] is still from the items before this one.",
+        "So each item can only be used once.",
       ],
       diagram: `  item weight 3, value 4
 
@@ -1030,13 +1025,13 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
 
   dp[c] = max(dp[c], dp[c-3] + 4)
                      └ previous item's row`,
-      key: "0/1 → descending capacity. Unbounded → ascending. That single direction is the whole distinction.",
+      key: "Each item once: go down. Reuse allowed: go up. That direction is the whole difference.",
     },
     templates: [
       {
         name: "1D knapsack",
         filename: "knapsack_01.go",
-        note: "The descending inner loop is what enforces 'at most once'.",
+        note: "The downwards inner loop is what enforces 'at most once'.",
         code: `func knapsack(weights, values []int, capacity int) int {
     dp := make([]int, capacity+1)
 
@@ -1051,7 +1046,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "2D (explicit)",
         filename: "knapsack_2d.go",
-        note: "Clearer for explaining, and required if you must reconstruct the chosen items.",
+        note: "Clearer to explain, and required if you need the chosen items back.",
         code: `func knapsack2D(weights, values []int, capacity int) int {
     n := len(weights)
     dp := make([][]int, n+1)
@@ -1073,7 +1068,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "Two capacities",
         filename: "ones_and_zeroes.go",
-        note: "Both dimensions iterate downward for the same reason.",
+        note: "Both dimensions go downwards, for the same reason.",
         code: `func findMaxForm(strs []string, m, n int) int {
     dp := make([][]int, m+1)
     for i := range dp {
@@ -1096,7 +1091,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "Reconstruct the items",
         filename: "knapsack_trace.go",
-        note: "Needs the 2D table — walk backwards comparing rows.",
+        note: "Needs the 2D table. Walk back comparing neighbouring rows.",
         code: `func chosenItems(dp [][]int, weights []int, capacity int) []int {
     var picked []int
     c := capacity
@@ -1116,9 +1111,9 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       { label: "Time", value: "O(n · capacity)" },
       { label: "Space (1D)", value: "O(capacity)" },
       { label: "Space (2D)", value: "O(n · capacity)", note: "needed to reconstruct" },
-      { label: "Note", value: "pseudo-polynomial", note: "linear in the capacity's VALUE, not its bit length" },
+      { label: "Note", value: "pseudo-polynomial", note: "grows with W itself, not its digits" },
     ],
-    why: "Iterating capacity downward means dp[c-w] has not yet been touched for this item, so it still holds the previous item's answer. Iterating upward would let the same item be counted repeatedly — which is exactly the unbounded variant.",
+    why: "Walking downwards means dp[c-w] has not been touched for this item yet, so it still describes the items before it. Walking upwards would let the same item be picked again, which is a different problem.",
     variations: [
       { name: "Subset sum", detail: "Values equal weights and you only need feasibility — booleans." },
       { name: "Counting solutions", detail: "Replace max with + to count the ways to reach each capacity." },
@@ -1128,7 +1123,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
     mistakes: [
       { title: "Iterating capacity upward", detail: "Silently turns 0/1 into unbounded. The single most common DP bug." },
       { title: "Looping items inside capacity", detail: "In the 1D form the item loop must be outermost." },
-      { title: "Assuming polynomial time", detail: "O(n·W) is pseudo-polynomial — huge W makes it infeasible." },
+      { title: "Thinking it is fast for any capacity", detail: "O(n x W) grows with the VALUE of W, not its size. A huge capacity makes it useless." },
       { title: "Trying to reconstruct from the 1D array", detail: "The history is gone; keep the 2D table." },
     ],
     related: ["unbounded-knapsack", "subset-sum", "bounded-knapsack", "linear-dp"],
@@ -1150,9 +1145,10 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
     typicalQuestion: "What is the fewest coins needed to make this amount?",
     mentalModel: {
       lines: [
-        "Upward capacity means dp[c-w] may already include this item — that is reuse.",
-        "Coins outer, amount inner → counts COMBINATIONS (order ignored).",
-        "Amount outer, coins inner → counts PERMUTATIONS (order matters).",
+        "Walk the capacities UPWARDS so an item can be picked again.",
+        "Loop order decides what you count.",
+        "Items outside: combinations, order ignored.",
+        "Amount outside: permutations, order matters.",
       ],
       diagram: `  coins {1,2}, amount 3
 
@@ -1160,13 +1156,13 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
   permutations: 1+1+1, 1+2, 2+1   → 3
 
   the loop order alone decides which`,
-      key: "The loop nesting is not a style choice — it changes the answer.",
+      key: "The loop nesting is not a style choice. It changes the answer.",
     },
     templates: [
       {
         name: "Minimum count",
         filename: "coin_change.go",
-        note: "Upward inner loop allows reuse. Sentinel for unreachable amounts.",
+        note: "Upwards allows reuse. Use a sentinel for amounts you cannot reach.",
         code: `func coinChange(coins []int, amount int) int {
     const inf = math.MaxInt32
     dp := make([]int, amount+1)
@@ -1191,7 +1187,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "Count combinations",
         filename: "coin_change_ii.go",
-        note: "Coins OUTSIDE — each combination is generated in one fixed coin order.",
+        note: "Coins on the OUTSIDE, so each combination is built in one fixed order.",
         code: `func change(amount int, coins []int) int {
     dp := make([]int, amount+1)
     dp[0] = 1
@@ -1207,7 +1203,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "Count permutations",
         filename: "combination_sum_iv.go",
-        note: "Amount OUTSIDE — every ordering is counted separately.",
+        note: "Amount on the OUTSIDE, so every ordering is counted separately.",
         code: `func combinationSum4(nums []int, target int) int {
     dp := make([]int, target+1)
     dp[0] = 1
@@ -1227,7 +1223,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       { label: "Time", value: "O(n · amount)" },
       { label: "Space", value: "O(amount)" },
     ],
-    why: "Going upward, dp[c-w] may already have used item w, so the item can be taken again. Going downward, dp[c-w] is untouched for this item — which is the 0/1 case. One loop direction separates the two problems entirely.",
+    why: "Going upwards, dp[c-w] may already include this item, so it can be taken again. Going downwards it cannot. One loop direction separates the two problems entirely.",
     variations: [
       { name: "Rod cutting", detail: "Identical structure, maximising value instead of minimising count." },
       { name: "Perfect squares", detail: "Coin change where the coins are 1, 4, 9, 16 …" },
@@ -1258,9 +1254,10 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
     typicalQuestion: "Maximise value with at most k copies of each item.",
     mentalModel: {
       lines: [
-        "Naively: try taking 0, 1, … k copies — an extra O(k) factor.",
-        "Binary split: represent k as 1 + 2 + 4 + … + remainder.",
-        "Those log k bundles can compose any count from 0 to k, so run 0/1 knapsack on them.",
+        "Each item comes with a limited number of copies.",
+        "Trying 0, 1, 2, ... k copies adds a whole extra loop.",
+        "Instead bundle them as 1, 2, 4, ... plus a remainder.",
+        "Those bundles can add up to any count from 0 to k.",
       ],
       diagram: `  k = 13
 
@@ -1269,13 +1266,13 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
 
   any count 0..13 is a subset sum of those
   → log k items instead of 13`,
-      key: "Binary splitting turns bounded into 0/1 at a log k cost.",
+      key: "Bundling in powers of two turns a bounded item into log k ordinary items.",
     },
     templates: [
       {
         name: "Binary splitting",
         filename: "bounded_knapsack.go",
-        note: "Each bundle is used at most once, so the standard downward loop applies.",
+        note: "Each bundle is used at most once, so the normal downwards loop applies.",
         code: `func boundedKnapsack(weights, values, counts []int, capacity int) int {
     dp := make([]int, capacity+1)
 
@@ -1297,7 +1294,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "Naive (small counts)",
         filename: "bounded_naive.go",
-        note: "Fine when the counts are tiny; the extra loop is the copy count.",
+        note: "Fine when the counts are tiny. The extra loop is the copy count.",
         code: `func boundedNaive(weights, values, counts []int, capacity int) int {
     dp := make([]int, capacity+1)
 
@@ -1314,7 +1311,7 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       {
         name: "Feasibility shortcut",
         filename: "bounded_feasible.go",
-        note: "For 'can I reach exactly X', a greedy counter beats any knapsack.",
+        note: "For 'can I hit exactly X', tracking leftover copies beats any knapsack.",
         code: `// can we hit target using at most counts[i] copies of value[i]?
 func canReach(values, counts []int, target int) bool {
     used := make([]int, target+1)
@@ -1346,7 +1343,7 @@ func canReach(values, counts []int, target int) bool {
       { label: "Space", value: "O(capacity)" },
     ],
     variations: [
-      { name: "Monotonic deque optimisation", detail: "Group capacities by remainder modulo the weight and slide a max-deque — removes the log factor." },
+      { name: "Deque optimisation", detail: "Group capacities by remainder and slide a max-deque. Removes the log factor." },
       { name: "Treat as unbounded", detail: "When k ≥ capacity / weight the bound never binds, so use the unbounded version." },
       { name: "Feasibility only", detail: "The greedy remaining-count trick above is O(n · target) with no splitting." },
     ],
@@ -1374,9 +1371,9 @@ func canReach(values, counts []int, target int) bool {
     typicalQuestion: "Can this array be split into two subsets with equal sums?",
     mentalModel: {
       lines: [
-        "dp[s] = is the sum s reachable using the items seen so far?",
-        "Each item either contributes or not, so dp[s] |= dp[s - v].",
-        "Iterate sums downward — a 0/1 knapsack with booleans.",
+        "dp[s] answers one question: can I make the total s?",
+        "Each number is either in or out, so dp[s] borrows from dp[s - v].",
+        "Walk the totals downwards, exactly like 0/1 knapsack.",
       ],
       diagram: `  nums 1, 5, 11, 5   total 22 → target 11
 
@@ -1384,13 +1381,13 @@ func canReach(values, counts []int, target int) bool {
   after 5:               {0,1,5,6}
   after 11:              {0,1,5,6,11,...}
                                   ▲ hit`,
-      key: "Sign assignment reduces to subset sum: sum(P) = (total + target) / 2.",
+      key: "Putting + and - on numbers is the same as picking a subset that sums to (total + target) / 2.",
     },
     templates: [
       {
         name: "Partition",
         filename: "partition_equal.go",
-        note: "Odd totals are immediately impossible — check before allocating.",
+        note: "An odd total can never split evenly, so check that before allocating.",
         code: `func canPartition(nums []int) bool {
     total := 0
     for _, v := range nums {
@@ -1440,7 +1437,7 @@ func canReach(values, counts []int, target int) bool {
       {
         name: "Minimum difference",
         filename: "min_difference.go",
-        note: "Find the reachable sum closest to half the total.",
+        note: "Find the reachable total closest to half of everything.",
         code: `func minimumDifference(nums []int) int {
     total := 0
     for _, v := range nums {
@@ -1467,7 +1464,7 @@ func canReach(values, counts []int, target int) bool {
       {
         name: "Bitset trick",
         filename: "subset_bitset.go",
-        note: "A shifted big-integer OR does 64 sums per word — very fast for pure feasibility.",
+        note: "A shifted big integer tests 64 totals at once. Very fast for yes/no.",
         code: `func canPartitionFast(nums []int, target int) bool {
     reach := big.NewInt(1) // bit s set means sum s is reachable
 

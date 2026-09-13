@@ -19,9 +19,9 @@ export const twoPointers: Pattern[] = [
     typicalQuestion: "Find two numbers in a sorted array that sum to a target.",
     mentalModel: {
       lines: [
-        "Converging: start at both ends, move the one that can improve the answer.",
-        "Same direction: a slow write pointer trails a fast read pointer.",
-        "Each pointer moves only forward, so the total work is linear.",
+        "Start at both ends and walk inwards.",
+        "Move the pointer that could still improve the answer.",
+        "Or walk the same way: a slow writer trailing a fast reader.",
       ],
       diagram: `  converging
   [ 2   3   5   8   11   15 ]
@@ -30,13 +30,13 @@ export const twoPointers: Pattern[] = [
 
   sum < target → L++      (only L can raise it)
   sum > target → R--      (only R can lower it)`,
-      key: "Every move must eliminate a whole set of candidates, not just one.",
+      key: "Every move must rule out a whole group of candidates, not just one.",
     },
     templates: [
       {
         name: "Converging",
         filename: "two_pointers.go",
-        note: "Sorted input. Each comparison discards an entire row or column of the pair space.",
+        note: "Sorted input. Each comparison throws away a whole row of pairs.",
         code: `func twoSumSorted(nums []int, target int) []int {
     l, r := 0, len(nums)-1
     for l < r {
@@ -56,7 +56,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Three sum",
         filename: "three_sum.go",
-        note: "Fix one index, two-point the rest. Duplicate skipping is needed at all three levels.",
+        note: "Fix one number, two-point the rest. Skip duplicates at every level.",
         code: `func threeSum(nums []int) [][]int {
     sort.Ints(nums)
     var out [][]int
@@ -66,7 +66,7 @@ export const twoPointers: Pattern[] = [
             break // sorted: no way back to zero
         }
         if i > 0 && nums[i] == nums[i-1] {
-            continue // skip duplicate anchors
+            continue // skip a duplicate anchor
         }
 
         l, r := i+1, len(nums)-1
@@ -79,14 +79,9 @@ export const twoPointers: Pattern[] = [
                 r--
             default:
                 out = append(out, []int{nums[i], nums[l], nums[r]})
-                l++
+                for l++; l < r && nums[l] == nums[l-1]; l++ {
+                }
                 r--
-                for l < r && nums[l] == nums[l-1] {
-                    l++
-                }
-                for l < r && nums[r] == nums[r+1] {
-                    r--
-                }
             }
         }
     }
@@ -96,7 +91,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Read / write",
         filename: "partition.go",
-        note: "Same-direction pointers. w marks where the next keeper goes.",
+        note: "Same direction. w marks where the next keeper goes.",
         code: `func removeDuplicates(nums []int) int {
     if len(nums) == 0 {
         return 0
@@ -114,7 +109,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Dutch flag",
         filename: "dutch_flag.go",
-        note: "Three-way partition in one pass. Do not advance i when swapping with hi.",
+        note: "Three-way split in one pass. Do not advance i after swapping with hi.",
         code: `func sortColors(nums []int) {
     lo, i, hi := 0, 0, len(nums)-1
     for i <= hi {
@@ -139,7 +134,7 @@ export const twoPointers: Pattern[] = [
       { label: "Three sum", value: "O(n²)" },
       { label: "Space", value: "O(1)" },
     ],
-    why: "Correctness rests on a monotonicity argument. In converging two-sum, if nums[l]+nums[r] < target then nums[l] paired with anything at or below r is also too small, so l can never be part of the answer with any of those partners — the entire row is eliminated, not one cell.",
+    why: "It works because the array is sorted. If nums[l] + nums[r] is too small, then nums[l] is too small with every partner up to r as well. So one comparison throws away a whole row of pairs, not a single pair.",
     variations: [
       { name: "Closest sum", detail: "Same skeleton; instead of testing equality, track the smallest |sum - target| seen." },
       { name: "Fill from the back", detail: "Merging into the larger array is only safe backwards, where the unread region is never overwritten." },
@@ -173,8 +168,8 @@ export const twoPointers: Pattern[] = [
     mentalModel: {
       lines: [
         "Slow moves one step, fast moves two.",
-        "In a cycle, fast gains exactly one position per step on slow, so it must land on it.",
-        "When fast reaches the end, slow is at the middle.",
+        "Inside a loop, fast gains one place per step, so it must catch slow.",
+        "When fast runs off the end, slow is sitting at the middle.",
       ],
       diagram: `  1 → 2 → 3 → 4 → 5
               ↑         │
@@ -182,13 +177,13 @@ export const twoPointers: Pattern[] = [
 
   slow +1, fast +2
   gap shrinks by 1 each step → they meet`,
-      key: "Any function graph where each node has exactly one successor is a rho shape: a tail into a loop.",
+      key: "Any structure where each node has exactly one next is a loop with a tail.",
     },
     templates: [
       {
         name: "Cycle detect",
         filename: "has_cycle.go",
-        note: "Check fast and fast.Next before dereferencing.",
+        note: "Check fast and fast.Next before stepping, or you dereference nil.",
         code: `func hasCycle(head *ListNode) bool {
     slow, fast := head, head
     for fast != nil && fast.Next != nil {
@@ -204,7 +199,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Cycle entry",
         filename: "cycle_start.go",
-        note: "After the meeting, reset one pointer to the head and step both at speed 1.",
+        note: "After they meet, put one pointer back at the head and step both by one.",
         code: `func detectCycle(head *ListNode) *ListNode {
     slow, fast := head, head
     for fast != nil && fast.Next != nil {
@@ -226,7 +221,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Midpoint",
         filename: "middle.go",
-        note: "For even lengths this returns the second middle. Start fast at head.Next for the first.",
+        note: "For an even length this gives the second middle.",
         code: `func middleNode(head *ListNode) *ListNode {
     slow, fast := head, head
     for fast != nil && fast.Next != nil {
@@ -239,7 +234,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Nth from end",
         filename: "nth_from_end.go",
-        note: "Open a gap of n, then move both until the leader falls off. A dummy head removes the edge case.",
+        note: "Open a gap of n, then move both. A dummy head kills the edge case.",
         code: `func removeNthFromEnd(head *ListNode, n int) *ListNode {
     dummy := &ListNode{Next: head}
     slow, fast := dummy, dummy
@@ -258,12 +253,12 @@ export const twoPointers: Pattern[] = [
     ],
     complexity: [
       { label: "Time", value: "O(n)" },
-      { label: "Space", value: "O(1)", note: "the point of the pattern; a hash set also works at O(n) space" },
+      { label: "Space", value: "O(1)", note: "the whole point; a hash set works too, at O(n)" },
     ],
-    why: "Let the tail have length a and the meeting point sit b steps into a cycle of length c. Slow travelled a+b, fast travelled a+b+kc, and fast travelled exactly twice as far. So a+b = kc-b, giving a = kc - 2b + ... — reduced: walking a steps from the head and a steps from the meeting point lands on the same node.",
+    why: "Say the tail is a steps long and they meet b steps into a loop of length c. Slow walked a+b, fast walked twice that, and the extra distance is a whole number of loops. Doing the algebra, walking a steps from the head and a steps from the meeting point lands on the same node.",
     variations: [
       { name: "Duplicate number as a cycle", detail: "Treat i → nums[i] as a list. With n+1 values in 1..n, two indices point at the same value, forming a cycle whose entry is the duplicate." },
-      { name: "Happy number", detail: "Digit-square-sum is a function on integers, so it is a functional graph — the cycle detection applies unchanged." },
+      { name: "Happy number", detail: "Each number leads to exactly one other, so the chain must eventually loop. Same detection." },
       { name: "Palindrome list", detail: "Midpoint, reverse the second half, compare, and optionally restore." },
       { name: "Reorder / split", detail: "Midpoint plus reversal underpins reorder-list and merge-sort on lists." },
     ],
@@ -284,17 +279,17 @@ export const twoPointers: Pattern[] = [
     usedFor: ["subarrays of length k", "rolling averages", "anagram search", "fixed-length substrings"],
     signals: ["of size k", "of length k", "exactly k consecutive", "every window", "average of k", "anagram"],
     recognition: [
-      "the window length is given in the statement",
-      "the answer is over all contiguous blocks of that exact length",
-      "the naive solution recomputes the whole block for every start index",
-      "the aggregate is incremental: sum, count, frequency",
+      "the window length is given to you in the statement",
+      "the answer is over every block of exactly that length",
+      "the naive version redoes the whole block for each starting point",
+      "the thing you track can be added to and taken away from: a sum, a count",
     ],
     typicalQuestion: "Find the maximum sum of any subarray of length k.",
     mentalModel: {
       lines: [
         "Fill the first k elements, then slide.",
-        "One element enters on the right, one leaves on the left.",
-        "State never gets recomputed — it gets patched.",
+        "One value enters on the right, one leaves on the left.",
+        "Patch the running total instead of recomputing it.",
       ],
       diagram: `  [ 1   3   2   5   4 ]   k = 3
     └───────┘
@@ -302,13 +297,13 @@ export const twoPointers: Pattern[] = [
              +5  −1
 
   each step: O(1) update`,
-      key: "If the aggregate can be undone, the window costs O(1) per step.",
+      key: "If the total can be undone, each step costs O(1).",
     },
     templates: [
       {
         name: "Fixed window",
         filename: "fixed_window.go",
-        note: "The single loop form: add, then evict once the window is oversized.",
+        note: "Add first, then drop the element that fell out of the window.",
         code: `func maxSumK(nums []int, k int) int {
     sum, best := 0, math.MinInt
 
@@ -327,7 +322,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Frequency window",
         filename: "anagrams.go",
-        note: "Track a matched counter instead of comparing two tables every step.",
+        note: "Compare 26-slot count arrays with == rather than looping.",
         code: `func findAnagrams(s, p string) []int {
     if len(s) < len(p) {
         return nil
@@ -353,7 +348,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Rolling hash window",
         filename: "rolling_window.go",
-        note: "When the window is a fixed-width code, pack it into an integer instead of a map.",
+        note: "A tiny alphabet packs into an integer, so no map is needed.",
         code: `func findRepeatedDNA(s string) []string {
     if len(s) < 10 {
         return nil
@@ -378,11 +373,11 @@ export const twoPointers: Pattern[] = [
       },
     ],
     complexity: [
-      { label: "Time", value: "O(n)", note: "each element enters and leaves exactly once" },
-      { label: "Space", value: "O(1)", note: "O(k) or O(alphabet) when a frequency table is needed" },
+      { label: "Time", value: "O(n)", note: "each element goes in once, out once" },
+      { label: "Space", value: "O(1)", note: "O(k) if you keep a count table" },
     ],
     variations: [
-      { name: "Window maximum", detail: "max cannot be undone by subtraction — use a monotonic deque." },
+      { name: "Window maximum", detail: "A max cannot be subtracted back out, so use a deque instead." },
       { name: "Window with a constraint", detail: "Fixed size plus a validity rule (all distinct, at most k vowels) just adds a counter." },
       { name: "Two windows", detail: "Some problems slide two windows of different sizes in the same pass." },
     ],
@@ -403,18 +398,18 @@ export const twoPointers: Pattern[] = [
     usedFor: ["longest valid subarray", "shortest valid subarray", "at most K constraints", "frequency constraints"],
     signals: ["longest", "shortest", "at most K", "at least K", "contiguous", "without repeating", "distinct characters"],
     recognition: [
-      "the answer is a contiguous subarray or substring",
-      "there is a constraint that can only get harder as the window grows",
-      "you can test validity incrementally from the window's own state",
-      "all values are non-negative (for sum constraints) so growth is monotone",
+      "the answer is a stretch of neighbouring elements",
+      "there is a rule that only gets harder to satisfy as the window grows",
+      "you can tell whether the window is valid from what you already track",
+      "for sums, the values are all positive, so a bigger window means a bigger sum",
     ],
     typicalQuestion: "Find the longest substring containing at most K distinct characters.",
     mentalModel: {
       lines: [
-        "left ────────────── right",
-        "Expand right to include the next element.",
+        "Move right to take in a new element.",
         "While the window is invalid, move left until it is valid again.",
-        "Record the answer at the right moment — that moment differs for longest and shortest.",
+        "Record the answer at the right moment.",
+        "For longest, record after shrinking. For shortest, record while shrinking.",
       ],
       diagram: `  longest valid          shortest valid
   ─────────────          ──────────────
@@ -422,13 +417,13 @@ export const twoPointers: Pattern[] = [
   while INVALID:         while VALID:
       shrink left            record
   record                     shrink left`,
-      key: "Don't recompute the window. Maintain its state incrementally.",
+      key: "Do not rebuild the window. Update what you already know.",
     },
     templates: [
       {
         name: "Longest",
         filename: "longest_window.go",
-        note: "Shrink while invalid, then the window is valid and maximal for this right.",
+        note: "Shrink while invalid. When the loop ends, the window is valid and as big as it gets.",
         code: `func longestAtMostKDistinct(s string, k int) int {
     cnt := map[byte]int{}
     left, best := 0, 0
@@ -452,7 +447,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Shortest",
         filename: "shortest_window.go",
-        note: "Record inside the shrink loop — that is where the window is minimal and still valid.",
+        note: "Record inside the shrink loop, where the window is smallest and still valid.",
         code: `func minSubArrayLen(target int, nums []int) int {
     left, sum := 0, 0
     best := math.MaxInt
@@ -475,7 +470,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Jump the left edge",
         filename: "no_repeat.go",
-        note: "When you know exactly where the violation is, jump instead of stepping.",
+        note: "When you know where the clash is, jump left past it instead of stepping.",
         code: `func lengthOfLongestSubstring(s string) int {
     last := [128]int{}
     for i := range last {
@@ -496,7 +491,7 @@ export const twoPointers: Pattern[] = [
       {
         name: "Exactly K",
         filename: "exactly_k.go",
-        note: "'Exactly K' is not monotone. 'At most K' is — so subtract two runs.",
+        note: "'Exactly K' is not a one-sided rule. 'At most K' is, so run it twice and subtract.",
         code: `func subarraysWithKDistinct(nums []int, k int) int {
     return atMostKDistinct(nums, k) - atMostKDistinct(nums, k-1)
 }
@@ -521,10 +516,10 @@ func atMostKDistinct(nums []int, k int) int {
       },
     ],
     complexity: [
-      { label: "Time", value: "O(n)", note: "left and right each advance at most n times" },
-      { label: "Space", value: "O(k)", note: "or O(alphabet) for the frequency table" },
+      { label: "Time", value: "O(n)", note: "each pointer moves forward at most n times" },
+      { label: "Space", value: "O(k)", note: "or the alphabet size, for counts" },
     ],
-    why: "The window works only when validity is monotone: if a window is invalid, every window containing it is also invalid. That is what lets left move forward and never come back. Sums with negative numbers break this, which is why 'subarray sum equals K' needs prefix sums instead.",
+    why: "The window only works if breaking the rule is permanent: once a window is invalid, every bigger window around it is invalid too. That is what lets left move forward and never come back. Negative numbers break it, which is why 'sum equals k' needs prefix sums instead.",
     variations: [
       { name: "At least K", detail: "Often easier as total subarrays minus atMost(K-1)." },
       { name: "Count, not length", detail: "Each right contributes right-left+1 valid subarrays — a one-line change." },
@@ -534,7 +529,7 @@ func atMostKDistinct(nums []int, k int) int {
     mistakes: [
       { title: "Moving left backwards", detail: "In the jump variant, guard with left = max(left, last+1) or an old duplicate drags the window back." },
       { title: "Recording the answer in the wrong place", detail: "Longest records after shrinking; shortest records inside the shrink loop." },
-      { title: "Using a window when values can be negative", detail: "Shrinking may increase the sum, so the invariant is gone. Use prefix sums plus a map." },
+      { title: "Using a window when values can be negative", detail: "Shrinking might make the sum bigger, so the rule you relied on is gone. Use prefix sums plus a map." },
       { title: "Leaving zero counts in the map", detail: "len(cnt) is the distinct count only if you delete keys that reach zero." },
     ],
     related: ["fixed-sliding-window", "two-pointers", "prefix-sum-hash-map", "deque"],
@@ -549,18 +544,18 @@ func atMostKDistinct(nums []int, k int) int {
     usedFor: ["choosing between window and prefix sum", "counting subarrays", "maximum-sum subarrays"],
     signals: ["subarray", "substring", "contiguous", "how many subarrays", "maximum sum", "equals k"],
     recognition: [
-      "the word 'contiguous' appears, or is implied by 'subarray'/'substring'",
-      "you must decide: is the property monotone as the window grows?",
-      "counting subarrays rather than finding one — think 'endings at each right'",
-      "maximum sum with no length constraint — that is Kadane, not a window",
+      "the word 'contiguous' appears, or 'subarray' or 'substring' implies it",
+      "ask one question: once the rule breaks, does a bigger window always break it too?",
+      "you are counting subarrays, so think about how many valid starts each end has",
+      "biggest sum with no length limit: that is Kadane, not a window",
     ],
     typicalQuestion: "How many subarrays sum to exactly k?",
     mentalModel: {
       lines: [
-        "All values non-negative and the property monotone → sliding window.",
-        "Negatives present, or an exact sum required → prefix sums plus a hash map.",
-        "Maximum sum with no constraints → Kadane.",
-        "Counting subarrays → sum over right of (number of valid lefts).",
+        "All values positive and the rule one-sided? Sliding window.",
+        "Negatives, or an exact total? Prefix sums plus a map.",
+        "Biggest sum, any length? Kadane.",
+        "Counting them? Add up how many valid starts each end has.",
       ],
       diagram: `  contiguous?
       │yes
@@ -570,13 +565,13 @@ func atMostKDistinct(nums []int, k int) int {
       └── no  ──▶ exact target?
                    ├── yes ─▶ prefix + map  O(n)
                    └── no  ─▶ DP / D&C`,
-      key: "The question is never 'which trick' — it is 'is the property monotone'.",
+      key: "The question is never which trick. It is whether breaking the rule is permanent.",
     },
     templates: [
       {
         name: "Kadane",
         filename: "kadane.go",
-        note: "Best subarray ending here: extend the previous one, or start fresh.",
+        note: "Best run ending here: either extend the last one, or start again.",
         code: `func maxSubArray(nums []int) int {
     best, cur := nums[0], nums[0]
     for _, v := range nums[1:] {
@@ -589,7 +584,7 @@ func atMostKDistinct(nums []int, k int) int {
       {
         name: "Count by endings",
         filename: "count_subarrays.go",
-        note: "Fix the right end; count how many lefts make it valid. Sum over all rights.",
+        note: "Fix the right end, count the valid lefts, add them up.",
         code: `func numSubarrayProductLessThanK(nums []int, k int) int {
     if k <= 1 {
         return 0
@@ -610,7 +605,7 @@ func atMostKDistinct(nums []int, k int) int {
       {
         name: "Min and max together",
         filename: "max_product.go",
-        note: "A negative swaps the roles of the running min and max, so carry both.",
+        note: "A negative swaps the running best and worst, so carry both.",
         code: `func maxProduct(nums []int) int {
     best, curMax, curMin := nums[0], nums[0], nums[0]
 
@@ -630,7 +625,7 @@ func atMostKDistinct(nums []int, k int) int {
       { label: "Window", value: "O(n)" },
       { label: "Prefix + map", value: "O(n)" },
       { label: "Kadane", value: "O(n)" },
-      { label: "Space", value: "O(1) – O(n)", note: "O(n) only when a prefix map is needed" },
+      { label: "Space", value: "O(1) – O(n)", note: "O(n) only if you need a prefix map" },
     ],
     variations: [
       { name: "Circular subarray", detail: "max(kadaneMax, total - kadaneMin), with a guard for the all-negative case." },
@@ -662,9 +657,9 @@ func atMostKDistinct(nums []int, k int) int {
     typicalQuestion: "Count the subarrays whose sum equals k, where values may be negative.",
     mentalModel: {
       lines: [
-        "P[j+1] - P[i] = k   ⟺   P[i] = P[j+1] - k.",
-        "So as you sweep, ask the map how many earlier prefixes equal cur - k.",
-        "Seed the map with prefix 0 seen once — that covers subarrays starting at index 0.",
+        "Every subarray sum is the difference of two running totals.",
+        "So sum(i..j) = k means an earlier total equalled cur - k.",
+        "As you sweep, ask the map how many earlier totals match.",
       ],
       diagram: `  running sum:  0   3   1   6   6
                  ↑           ↑
@@ -672,13 +667,13 @@ func atMostKDistinct(nums []int, k int) int {
 
   need P[i] = P[j+1] − k
   map: prefix → count (or first index)`,
-      key: "Seed {0: 1}. Almost every wrong answer here is a missing seed.",
+      key: "Seed the map with {0: 1}. Almost every wrong answer here is a missing seed.",
     },
     templates: [
       {
         name: "Count subarrays",
         filename: "subarray_sum_k.go",
-        note: "The map counts occurrences, so it counts subarrays.",
+        note: "The map counts how often each total appeared, so it counts subarrays.",
         code: `func subarraySum(nums []int, k int) int {
     seen := map[int]int{0: 1} // empty prefix
     sum, total := 0, 0
@@ -694,7 +689,7 @@ func atMostKDistinct(nums []int, k int) int {
       {
         name: "Longest subarray",
         filename: "longest_sum_k.go",
-        note: "Store the FIRST index of each prefix and never overwrite it.",
+        note: "Store the FIRST index of each total and never overwrite it.",
         code: `func maxLenSumK(nums []int, k int) int {
     first := map[int]int{0: -1}
     sum, best := 0, 0
@@ -714,7 +709,7 @@ func atMostKDistinct(nums []int, k int) int {
       {
         name: "Divisible by k",
         filename: "divisible_k.go",
-        note: "Two prefixes with the same remainder bracket a subarray divisible by k.",
+        note: "Two totals with the same remainder bracket a subarray divisible by k.",
         code: `func subarraysDivByK(nums []int, k int) int {
     cnt := make([]int, k)
     cnt[0] = 1
@@ -731,7 +726,7 @@ func atMostKDistinct(nums []int, k int) int {
       {
         name: "On a tree path",
         filename: "path_sum_iii.go",
-        note: "The same map, but the prefix is the root-to-node path — undo it on the way out.",
+        note: "Same map, but the total runs down the path. Undo it on the way back up.",
         code: `func pathSum(root *TreeNode, target int) int {
     seen := map[int]int{0: 1}
     var dfs func(*TreeNode, int) int
@@ -757,11 +752,11 @@ func atMostKDistinct(nums []int, k int) int {
       { label: "Time", value: "O(n)" },
       { label: "Space", value: "O(n)", note: "O(k) for the remainder variant" },
     ],
-    why: "A sliding window needs the running sum to be monotone in the window size. Negative values destroy that. Prefix sums do not care about signs — every subarray sum is still exactly a difference of two prefixes, so the only question becomes a lookup.",
+    why: "A sliding window needs the running sum to grow as the window grows. Negative numbers break that. Prefix sums do not care about signs: a subarray sum is still just one total minus another, so the whole problem becomes a lookup.",
     variations: [
       { name: "Equal counts of two symbols", detail: "Map one to +1 and the other to -1; a balanced subarray is two equal prefixes." },
       { name: "Remainder with a first-index map", detail: "For 'length at least 2 and divisible by k', store the first index per remainder." },
-      { name: "XOR prefixes", detail: "XOR is invertible, so the same structure counts subarrays with a given XOR." },
+      { name: "XOR prefixes", detail: "XOR undoes itself, so the same structure counts subarrays with a given XOR." },
     ],
     mistakes: [
       { title: "Forgetting the {0: 1} seed", detail: "Subarrays that start at index 0 go uncounted." },
@@ -789,9 +784,10 @@ func atMostKDistinct(nums []int, k int) int {
     typicalQuestion: "Find the longest palindromic substring.",
     mentalModel: {
       lines: [
-        "A palindrome is defined by its centre, and there are 2n-1 centres: n single, n-1 between.",
-        "Expanding from a centre costs O(len) and finds the maximal palindrome there.",
-        "Substring means contiguous — expansion. Subsequence means gaps allowed — DP.",
+        "A palindrome is defined by its centre.",
+        "There are 2n-1 centres: one on each letter, one between each pair.",
+        "Grow outwards from a centre while both sides match.",
+        "Contiguous means expand. Gaps allowed means DP.",
       ],
       diagram: `  a b a c a b a
       ▲                odd centre  (1 char)
@@ -799,13 +795,13 @@ func atMostKDistinct(nums []int, k int) int {
       ▲                even centre (between 2)
 
   expand while s[l] == s[r]`,
-      key: "Substring → expand around centres. Subsequence → interval DP.",
+      key: "Substring, so expand from centres. Subsequence, so use interval DP.",
     },
     templates: [
       {
         name: "Validate",
         filename: "is_palindrome.go",
-        note: "Skip non-alphanumerics in place — no cleaned copy needed.",
+        note: "Skip punctuation in place instead of building a cleaned copy.",
         code: `func isPalindrome(s string) bool {
     l, r := 0, len(s)-1
     for l < r {
@@ -827,7 +823,7 @@ func atMostKDistinct(nums []int, k int) int {
       {
         name: "Expand from centre",
         filename: "expand_center.go",
-        note: "Run it twice per index: odd centre (i,i) and even centre (i,i+1).",
+        note: "Run it twice per index: centred on i, and between i and i+1.",
         code: `func longestPalindrome(s string) string {
     if len(s) < 2 {
         return s
@@ -855,7 +851,7 @@ func atMostKDistinct(nums []int, k int) int {
       {
         name: "Interval DP",
         filename: "palindrome_dp.go",
-        note: "isPal[i][j] depends on isPal[i+1][j-1], so fill by increasing length.",
+        note: "isPal[i][j] needs isPal[i+1][j-1], so fill by growing length.",
         code: `func palindromeTable(s string) [][]bool {
     n := len(s)
     isPal := make([][]bool, n)
@@ -876,7 +872,7 @@ func atMostKDistinct(nums []int, k int) int {
       {
         name: "Allow one deletion",
         filename: "almost_palindrome.go",
-        note: "On the first mismatch, branch into the two possible repairs.",
+        note: "On the first mismatch, try skipping the left char, then the right.",
         code: `func validPalindromeII(s string) bool {
     l, r := 0, len(s)-1
     for l < r {

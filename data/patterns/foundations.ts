@@ -10,17 +10,17 @@ export const foundations: Pattern[] = [
     usedFor: ["in-place rewrites", "index-as-hash tricks", "matrix walks", "O(1) extra space"],
     signals: ["in-place", "O(1) space", "1..n values", "rotate", "matrix", "without extra array"],
     recognition: [
-      "the values are bounded by the length (1..n) — the array can be its own hash table",
-      "the problem forbids extra space",
-      "you are asked to rewrite the input rather than return a new slice",
-      "a matrix walk where boundaries, not directions, are the real state",
+      "the values are bounded by the length (1..n), so an index can stand in for a value",
+      "the problem forbids extra memory",
+      "you are asked to rewrite the input, not return a new slice",
+      "a matrix walk where the boundaries, not the direction, are the real state",
     ],
     typicalQuestion: "Rearrange the array in place using O(1) extra space.",
     mentalModel: {
       lines: [
-        "A slice is a window onto an array: pointer, length, capacity.",
-        "Two indices give you everything: one reads, one writes.",
-        "If values are 1..n, index i can encode a fact about value i+1.",
+        "Use two indices: one reads, one writes.",
+        "The reader always moves. The writer only moves on a keeper.",
+        "If the values are 1..n, the array can be its own lookup table.",
       ],
       diagram: `  read →
   [ 1 , 0 , 2 , 0 , 3 ]
@@ -28,13 +28,13 @@ export const foundations: Pattern[] = [
       write
 
   write only advances on a keeper`,
-      key: "Reading and writing at different speeds is the whole idea behind in-place work.",
+      key: "Two indices at different speeds. That is all in-place work is.",
     },
     templates: [
       {
         name: "Read / write",
         filename: "compact.go",
-        note: "Keep everything that passes a predicate, in order, with no allocation.",
+        note: "Keep everything that passes a test, in order, with no new slice.",
         code: `func compact(nums []int, keep func(int) bool) []int {
     w := 0
     for _, v := range nums {
@@ -49,7 +49,7 @@ export const foundations: Pattern[] = [
       {
         name: "Cyclic sort",
         filename: "cyclic_sort.go",
-        note: "Values are 1..n, so value v belongs at index v-1. Each swap places one value permanently.",
+        note: "Values are 1..n, so value v belongs at index v-1.",
         code: `func cyclicSort(nums []int) {
     for i := 0; i < len(nums); i++ {
         for nums[i] >= 1 && nums[i] <= len(nums) && nums[nums[i]-1] != nums[i] {
@@ -73,7 +73,7 @@ func firstMissing(nums []int) int {
       {
         name: "Sign marking",
         filename: "sign_mark.go",
-        note: "Use the sign bit at index |v|-1 as a 'seen' flag. O(1) space, values restored by abs.",
+        note: "Mark 'seen' by flipping the sign at index v-1. No extra memory.",
         code: `func findDisappeared(nums []int) []int {
     for _, v := range nums {
         i := abs(v) - 1
@@ -100,46 +100,32 @@ func abs(x int) int {
       {
         name: "Matrix boundaries",
         filename: "spiral.go",
-        note: "Four shrinking walls, not a direction state machine.",
-        code: `func spiralOrder(m [][]int) []int {
-    if len(m) == 0 {
-        return nil
-    }
-    top, bottom, left, right := 0, len(m)-1, 0, len(m[0])-1
-    out := make([]int, 0, len(m)*len(m[0]))
+        note: "Rotating a square matrix 90 degrees is a transpose plus a row reverse.",
+        code: `func rotate(m [][]int) {
+    n := len(m)
 
-    for top <= bottom && left <= right {
-        for c := left; c <= right; c++ {
-            out = append(out, m[top][c])
-        }
-        top++
-        for r := top; r <= bottom; r++ {
-            out = append(out, m[r][right])
-        }
-        right--
-        if top <= bottom {
-            for c := right; c >= left; c-- {
-                out = append(out, m[bottom][c])
-            }
-            bottom--
-        }
-        if left <= right {
-            for r := bottom; r >= top; r-- {
-                out = append(out, m[r][left])
-            }
-            left++
+    // transpose: swap across the diagonal
+    for r := 0; r < n; r++ {
+        for c := r + 1; c < n; c++ {
+            m[r][c], m[c][r] = m[c][r], m[r][c]
         }
     }
-    return out
+
+    // reverse each row
+    for _, row := range m {
+        for l, r := 0, n-1; l < r; l, r = l+1, r-1 {
+            row[l], row[r] = row[r], row[l]
+        }
+    }
 }`,
       },
     ],
     complexity: [
       { label: "Scan", value: "O(n)" },
-      { label: "Cyclic sort", value: "O(n)", note: "each swap fixes one position permanently" },
+      { label: "Cyclic sort", value: "O(n)", note: "each swap places one value for good" },
       { label: "Space", value: "O(1)", note: "the input is the scratch space" },
     ],
-    why: "Cyclic sort looks quadratic because of the inner loop, but every iteration of that loop puts one value into its final position, and a value is never displaced once placed. So the inner loop runs at most n times across the entire outer loop.",
+    why: "The inner loop looks like it makes cyclic sort quadratic. It does not: every swap puts one value in its final spot, and a placed value never moves again. So there are at most n swaps in total.",
     variations: [
       { name: "Reverse-based rotation", detail: "Rotate by k: reverse all, reverse [0,k), reverse [k,n). Three linear passes, no buffer." },
       { name: "Transpose + reverse", detail: "Rotating a square matrix 90° clockwise is a transpose followed by a row reverse." },
@@ -162,18 +148,17 @@ func abs(x int) int {
     usedFor: ["character frequency", "parsing", "building output", "unicode-safe indexing"],
     signals: ["substring", "anagram", "characters", "parse", "build a string", "lowercase letters"],
     recognition: [
-      "you need to mutate a string — convert to []byte (ASCII) or []rune (unicode)",
-      "you are concatenating in a loop — reach for strings.Builder",
-      "input is 'lowercase English letters' — a [26]int array beats a map",
-      "you need a canonical form of a word — sort it, or use a count signature",
+      "you need to change a string, so copy it into []byte or []rune first",
+      "you are gluing text together in a loop, so reach for strings.Builder",
+      "the input is 'lowercase English letters', so a [26]int beats a map",
+      "you need a standard form of a word, like its sorted letters or its letter counts",
     ],
     typicalQuestion: "Group all anagrams together.",
     mentalModel: {
       lines: [
-        "string  = immutable bytes, indexing gives a byte",
-        "[]byte  = mutable, 1 byte per element, ASCII-safe",
-        "[]rune  = mutable, 1 code point per element, unicode-safe",
-        "for i := range s ranges over byte offsets; for _, r := range s decodes runes.",
+        "A Go string is read-only bytes.",
+        "To change it, copy into []byte for ASCII or []rune for unicode.",
+        "For lowercase input, a [26]int count array beats a map.",
       ],
       diagram: `  s := "héllo"
 
@@ -182,13 +167,13 @@ func abs(x int) int {
   s[1]          → 0xC3  half of é
 
   index bytes, iterate runes`,
-      key: "Pick []byte for ASCII problems and []rune the moment unicode appears.",
+      key: "Use []byte for ASCII. Switch to []rune the moment unicode shows up.",
     },
     templates: [
       {
         name: "Frequency",
         filename: "freq.go",
-        note: "Fixed alphabet: an array, not a map. Comparable with ==, zero allocation.",
+        note: "Fixed alphabet, so use an array. Arrays compare with == and never allocate.",
         code: `func signature(s string) [26]int {
     var cnt [26]int
     for i := 0; i < len(s); i++ {
@@ -204,7 +189,7 @@ func isAnagram(a, b string) bool {
       {
         name: "Builder",
         filename: "builder.go",
-        note: "s += x in a loop is O(n^2). Builder writes into one growing buffer.",
+        note: "s += x in a loop is O(n^2). A Builder writes into one buffer.",
         code: `func repeatJoin(parts []string, sep string) string {
     var sb strings.Builder
     sb.Grow(64) // optional: pre-size when you can estimate
@@ -221,7 +206,7 @@ func isAnagram(a, b string) bool {
       {
         name: "In-place bytes",
         filename: "bytes.go",
-        note: "Convert once, mutate freely, convert back once.",
+        note: "Convert once, edit freely, convert back once.",
         code: `func reverseWords(s string) string {
     b := []byte(s)
     reverse(b, 0, len(b)-1)
@@ -281,9 +266,9 @@ func reverse(b []byte, i, j int) {
     typicalQuestion: "Find two numbers adding up to a target, in O(n).",
     mentalModel: {
       lines: [
-        "A map answers one question in O(1): have I seen this key, and what came with it?",
-        "Decide three things: what is the key, what is the value, when do I write.",
-        "Very often the key is not the element — it is a canonical form of the element.",
+        "A map answers one question fast: have I seen this before?",
+        "Decide three things: the key, the value, and when to write.",
+        "The key is often not the element itself but something derived from it.",
       ],
       diagram: `  need = target - x
          │
@@ -299,7 +284,7 @@ func reverse(b []byte, i, j int) {
       {
         name: "Seen set",
         filename: "seen.go",
-        note: "struct{} occupies zero bytes — the idiomatic Go set.",
+        note: "struct{} takes zero bytes. This is the idiomatic Go set.",
         code: `func hasDuplicate(nums []int) bool {
     seen := make(map[int]struct{}, len(nums))
     for _, v := range nums {
@@ -314,7 +299,7 @@ func reverse(b []byte, i, j int) {
       {
         name: "Complement lookup",
         filename: "two_sum.go",
-        note: "One pass. The lookup happens before the insert so i != j is guaranteed.",
+        note: "One pass. Looking up before inserting keeps i and j different.",
         code: `func twoSum(nums []int, target int) []int {
     idx := make(map[int]int, len(nums))
     for i, v := range nums {
@@ -329,7 +314,7 @@ func reverse(b []byte, i, j int) {
       {
         name: "Counting",
         filename: "counter.go",
-        note: "Missing keys read as the zero value, so ++ on an absent key just works.",
+        note: "A missing key reads as 0, so ++ just works.",
         code: `func mostCommon(words []string) string {
     cnt := map[string]int{}
     for _, w := range words {
@@ -348,7 +333,7 @@ func reverse(b []byte, i, j int) {
       {
         name: "Group by key",
         filename: "group.go",
-        note: "The key is a canonical form; the value is a bucket.",
+        note: "The key is a canonical form. The value is a bucket.",
         code: `func groupAnagrams(words []string) [][]string {
     groups := map[[26]int][]string{}
     for _, w := range words {
@@ -368,17 +353,17 @@ func reverse(b []byte, i, j int) {
       },
     ],
     complexity: [
-      { label: "Lookup", value: "O(1)", note: "average; worst case O(n) with adversarial keys" },
+      { label: "Lookup", value: "O(1)", note: "average; O(n) if the keys are chosen badly" },
       { label: "Insert", value: "O(1)", note: "amortised" },
       { label: "Full pass", value: "O(n)" },
       { label: "Space", value: "O(n)" },
     ],
-    why: "A hash map turns 'search the prefix I have already scanned' into a constant-time question. Any time an inner loop only re-reads earlier elements to test membership, a map removes that loop entirely.",
+    why: "An inner loop that only asks 'did I see this already?' is really doing a search. A map answers that in one step, so the loop disappears.",
     variations: [
       { name: "Map to index", detail: "Store the position, not just presence, when the answer is an index or a distance." },
       { name: "Map to first occurrence", detail: "For 'longest range with property P', keep the earliest index of each key and never overwrite it." },
       { name: "Fixed-size array instead", detail: "If keys are small integers or lowercase letters, an array is faster and allocation-free." },
-      { name: "Two maps for a bijection", detail: "Isomorphic-string problems need both directions checked." },
+      { name: "Two maps, both ways", detail: "Isomorphic-string problems need the mapping checked in both directions." },
     ],
     mistakes: [
       { title: "Inserting before looking up", detail: "In two-sum with target 2x, the element finds itself. Look up first." },
@@ -398,17 +383,17 @@ func reverse(b []byte, i, j int) {
     usedFor: ["repeated range sums", "range averages", "counting over ranges", "2D submatrix sums"],
     signals: ["range sum", "subarray sum", "between i and j", "many queries", "submatrix", "average of a range"],
     recognition: [
-      "the same array is queried for ranges many times and never changes",
-      "you would otherwise re-sum an overlapping region on each query",
-      "the quantity is associative and invertible: sums, XOR, counts, products of non-zeroes",
-      "a 2D version of the same question over submatrices",
+      "the same array is asked for range sums many times and never changes",
+      "the naive answer re-adds the same overlapping region on every query",
+      "the thing you are summing can be undone by subtraction: sums, counts, XOR",
+      "the 2D version: totals over a submatrix",
     ],
     typicalQuestion: "Answer many range-sum queries over an immutable array.",
     mentalModel: {
       lines: [
-        "P[0] = 0 and P[i] = a[0] + … + a[i-1].",
-        "Then sum(i..j) = P[j+1] - P[i].",
-        "The leading zero is what removes every boundary check.",
+        "P[0] = 0, and P[i] is the sum of the first i values.",
+        "Then the sum of a[i..j] is P[j+1] - P[i].",
+        "One subtraction answers any range.",
       ],
       diagram: `  a      [ 2   4   1   3 ]
   P    [ 0   2   6   7  10 ]
@@ -416,13 +401,13 @@ func reverse(b []byte, i, j int) {
          P[1]        P[4]
 
   sum(1..3) = P[4] - P[1] = 8`,
-      key: "Size the prefix array n+1 and leave P[0] = 0. Always.",
+      key: "Make the prefix array n+1 long and leave P[0] = 0. That removes every edge case.",
     },
     templates: [
       {
         name: "1D",
         filename: "prefix_sum.go",
-        note: "Build once in O(n), then every query is O(1).",
+        note: "Build once in O(n). Every query after that is O(1).",
         code: `type Prefix struct{ p []int }
 
 func NewPrefix(a []int) *Prefix {
@@ -441,7 +426,7 @@ func (s *Prefix) Range(i, j int) int {
       {
         name: "2D",
         filename: "prefix_2d.go",
-        note: "Inclusion-exclusion: add the two overlapping rectangles back once.",
+        note: "Add the two overlapping rectangles back once.",
         code: `type Prefix2D struct{ p [][]int }
 
 func NewPrefix2D(m [][]int) *Prefix2D {
@@ -465,7 +450,7 @@ func (s *Prefix2D) Range(r1, c1, r2, c2 int) int {
       {
         name: "Prefix + suffix",
         filename: "except_self.go",
-        note: "When the answer at i depends on everything but i, sweep both directions.",
+        note: "When the answer at i needs everything except i, sweep both ways.",
         code: `func productExceptSelf(nums []int) []int {
     n := len(nums)
     out := make([]int, n)
@@ -487,18 +472,18 @@ func (s *Prefix2D) Range(r1, c1, r2, c2 int) int {
     complexity: [
       { label: "Build", value: "O(n)", note: "O(rows·cols) in 2D" },
       { label: "Query", value: "O(1)" },
-      { label: "Update", value: "O(n)", note: "if you need updates, use a Fenwick tree instead" },
+      { label: "Update", value: "O(n)", note: "need updates? use a Fenwick tree" },
       { label: "Space", value: "O(n)" },
     ],
     variations: [
       { name: "Prefix XOR", detail: "XOR is its own inverse, so xor(i..j) = P[j+1] ^ P[i]." },
       { name: "Prefix count", detail: "Store counts of a property to answer 'how many vowels in this range' in O(1)." },
-      { name: "Prefix min/max", detail: "Not invertible — you can only extend, not subtract. Use a sparse table or segment tree for arbitrary ranges." },
+      { name: "Prefix min/max", detail: "You cannot subtract a min back out, so the prefix trick does not apply. Use a segment tree." },
     ],
     mistakes: [
       { title: "Off-by-one from a size-n prefix array", detail: "Use n+1 entries with P[0]=0 and sum(i..j)=P[j+1]-P[i]. Every other convention needs special cases." },
       { title: "Trying to subtract a min or max", detail: "Prefix tricks need an inverse. min has none." },
-      { title: "Reaching for a window when values can be negative", detail: "Negative values break window monotonicity — prefix sums plus a hash map still work." },
+      { title: "Reaching for a window when values can be negative", detail: "With negatives, shrinking a window can make the sum go up, so the window logic breaks. Prefix sums do not care about signs." },
     ],
     related: ["prefix-sum-hash-map", "difference-array", "fenwick-tree", "subarray-substring"],
     problems: [303, 304, 238, 560, 42, 528],
@@ -520,9 +505,9 @@ func (s *Prefix2D) Range(r1, c1, r2, c2 int) int {
     typicalQuestion: "Apply thousands of range increments, then report the final array.",
     mentalModel: {
       lines: [
-        "A difference array is the inverse of a prefix sum.",
-        "To add v over [l, r]: d[l] += v and d[r+1] -= v.",
-        "Prefix-summing d at the end replays every update at once.",
+        "A difference array is a prefix sum run backwards.",
+        "To add v over [l, r]: write +v at l and -v at r+1.",
+        "Prefix-sum the whole array once at the end.",
       ],
       diagram: `  add +5 over [1,3]
 
@@ -532,13 +517,13 @@ func (s *Prefix2D) Range(r1, c1, r2, c2 int) int {
   a   [ 0   5   5   5   0 ]
 
   O(1) per update, O(n) once`,
-      key: "Two writes per update instead of r-l+1.",
+      key: "Two writes per update instead of one write per cell.",
     },
     templates: [
       {
         name: "Range add",
         filename: "diff.go",
-        note: "Size n+1 so r+1 is always in bounds.",
+        note: "Size it n+1 so r+1 is always in bounds.",
         code: `type Diff struct{ d []int }
 
 func NewDiff(n int) *Diff { return &Diff{make([]int, n+1)} }
@@ -562,7 +547,7 @@ func (s *Diff) Build() []int {
       {
         name: "Sweep line",
         filename: "sweep.go",
-        note: "When coordinates are large, sort events instead of allocating an array.",
+        note: "When positions are huge, sort events instead of allocating an array.",
         code: `func maxOverlap(intervals [][]int) int {
     type event struct{ at, delta int }
     ev := make([]event, 0, 2*len(intervals))
@@ -622,16 +607,16 @@ func (s *Diff) Build() []int {
     typicalQuestion: "Find all unique triplets summing to zero.",
     mentalModel: {
       lines: [
-        "Sorting costs O(n log n) — spend it only to unlock a linear or logarithmic step.",
-        "The interesting choice is almost always the comparator, not the algorithm.",
-        "sort.Slice is not stable; sort.SliceStable is.",
+        "Sorting is rarely the answer. It is what makes the answer easy.",
+        "Spend O(n log n) only to unlock a faster next step.",
+        "The interesting choice is the comparator, not the algorithm.",
       ],
       diagram: `  unsorted   → nested loops, O(n²)
        │
      sort  O(n log n)
        ▼
   sorted     → two pointers / binary search / greedy sweep, O(n) or O(n log n)`,
-      key: "Ask what invariant sorting buys you before you pay for it.",
+      key: "Ask what sorting buys you before you pay for it.",
     },
     templates: [
       {
@@ -651,7 +636,7 @@ slices.SortFunc(items, func(a, b Item) int {
       {
         name: "Custom comparator",
         filename: "comparator.go",
-        note: "less(i, j) must be a strict weak ordering: never return true for both (i,j) and (j,i).",
+        note: "less(i, j) must be strict: never true for both (i,j) and (j,i).",
         code: `// by end ascending, then by start descending
 sort.Slice(intervals, func(i, j int) bool {
     if intervals[i][1] != intervals[j][1] {
@@ -669,7 +654,7 @@ sort.Slice(nums, func(i, j int) bool {
       {
         name: "Counting sort",
         filename: "counting_sort.go",
-        note: "O(n + k) when values live in a small known range.",
+        note: "O(n + k) when the values sit in a small known range.",
         code: `func countingSort(a []int, maxV int) []int {
     cnt := make([]int, maxV+1)
     for _, v := range a {
@@ -688,7 +673,7 @@ sort.Slice(nums, func(i, j int) bool {
       {
         name: "Merge sort",
         filename: "merge_sort.go",
-        note: "Write it by hand when the merge step must also count something.",
+        note: "Write it by hand when the merge step also has to count something.",
         code: `func mergeSort(a []int) []int {
     if len(a) <= 1 {
         return a
@@ -713,7 +698,7 @@ sort.Slice(nums, func(i, j int) bool {
       },
     ],
     complexity: [
-      { label: "Comparison sort", value: "O(n log n)", note: "the information-theoretic lower bound" },
+      { label: "Comparison sort", value: "O(n log n)", note: "no comparison sort can beat this" },
       { label: "Counting sort", value: "O(n + k)", note: "k = value range" },
       { label: "sort.Slice space", value: "O(log n)", note: "pdqsort, in place" },
       { label: "Merge sort space", value: "O(n)" },
@@ -725,7 +710,7 @@ sort.Slice(nums, func(i, j int) bool {
     ],
     mistakes: [
       { title: "Assuming sort.Slice is stable", detail: "It is not. Use sort.SliceStable when equal elements must keep their relative order." },
-      { title: "A comparator that is not a strict ordering", detail: "Using <= in less() can cause an inconsistent order and, in some runtimes, a panic." },
+      { title: "A comparator that says both ways are true", detail: "Using <= in less() can cause an inconsistent order and, in some runtimes, a panic." },
       { title: "Sorting when you only need the k best", detail: "A size-k heap is O(n log k), and quickselect is O(n) on average." },
       { title: "Losing the original indices", detail: "If the answer is an index, sort a slice of pairs or of indices." },
     ],
@@ -748,22 +733,22 @@ sort.Slice(nums, func(i, j int) bool {
     typicalQuestion: "Count how many elements to the right are smaller than each element.",
     mentalModel: {
       lines: [
-        "Sort the distinct values; each value's rank becomes its index.",
-        "n values means at most n ranks — the structure shrinks to O(n).",
-        "Order is preserved, so any comparison-based query still works.",
+        "Sort the distinct values and replace each one by its position.",
+        "n values means at most n positions, so the structure stays small.",
+        "Order survives, so any comparison still works.",
       ],
       diagram: `  values   [ 900  5  900  10⁹ ]
   sorted   [ 5  900  10⁹ ]
   rank      0    1     2
 
   compressed [ 1  0  1  2 ]`,
-      key: "Compression preserves order, not distance — never use it for gaps or sums of coordinates.",
+      key: "Compression keeps order, not distance. Never use ranks for sums or gaps.",
     },
     templates: [
       {
         name: "Compress",
         filename: "compress.go",
-        note: "Sort, dedupe in place, then binary search each original value for its rank.",
+        note: "Sort, remove duplicates, then binary search each value for its rank.",
         code: `func compress(a []int) ([]int, []int) {
     sorted := append([]int(nil), a...)
     sort.Ints(sorted)
@@ -788,7 +773,7 @@ sort.Slice(nums, func(i, j int) bool {
       {
         name: "Compress + BIT",
         filename: "count_smaller.go",
-        note: "Sweep right to left, querying how many smaller ranks were already inserted.",
+        note: "Sweep right to left, asking how many smaller ranks are already in.",
         code: `func countSmaller(nums []int) []int {
     ranks, distinct := compress(nums)
     bit := NewBIT(len(distinct))
@@ -803,7 +788,7 @@ sort.Slice(nums, func(i, j int) bool {
       },
     ],
     complexity: [
-      { label: "Compress", value: "O(n log n)", note: "sort plus a binary search per element" },
+      { label: "Compress", value: "O(n log n)", note: "a sort plus one lookup per element" },
       { label: "Lookup rank", value: "O(log n)" },
       { label: "Space", value: "O(n)" },
     ],
@@ -837,10 +822,10 @@ sort.Slice(nums, func(i, j int) bool {
     typicalQuestion: "Count the primes below n.",
     mentalModel: {
       lines: [
-        "gcd(a, b) = gcd(b, a mod b) — Euclid, O(log min(a,b)).",
-        "lcm(a, b) = a / gcd(a, b) * b — divide first to avoid overflow.",
-        "Exponentiation by squaring turns O(n) into O(log n).",
-        "n & (n-1) clears the lowest set bit; n & -n isolates it.",
+        "gcd(a, b) = gcd(b, a mod b). That loop finishes in O(log n).",
+        "lcm(a, b) = a / gcd * b. Divide first so nothing overflows.",
+        "Squaring turns a^n from n steps into log n steps.",
+        "n & (n-1) clears the lowest set bit.",
       ],
       diagram: `  a^13 = a^8 · a^4 · a^1
          13 = 1101₂
@@ -848,13 +833,13 @@ sort.Slice(nums, func(i, j int) bool {
   square and multiply:
   bit set → multiply into the result
   always  → square the base`,
-      key: "Anything phrased over multiples, divisors, or powers has a logarithmic form.",
+      key: "Anything phrased over multiples, divisors or powers has a log-time form.",
     },
     templates: [
       {
         name: "GCD / LCM",
         filename: "gcd.go",
-        note: "Iterative Euclid — no recursion depth to worry about.",
+        note: "Euclid, written as a loop. No recursion depth to worry about.",
         code: `func gcd(a, b int) int {
     for b != 0 {
         a, b = b, a%b
@@ -872,7 +857,7 @@ func lcm(a, b int) int {
       {
         name: "Sieve",
         filename: "sieve.go",
-        note: "Start crossing at i*i — smaller multiples already have a smaller factor.",
+        note: "Start crossing out at i*i. Smaller multiples already have a smaller factor.",
         code: `func sieve(n int) []bool {
     isComposite := make([]bool, n+1)
     for i := 2; i*i <= n; i++ {
@@ -888,7 +873,7 @@ func lcm(a, b int) int {
       {
         name: "Fast power",
         filename: "fast_pow.go",
-        note: "Square-and-multiply, with the modulus folded in.",
+        note: "Square and multiply, with the modulus folded in.",
         code: `func powMod(base, exp, mod int) int {
     base %= mod
     result := 1
@@ -905,7 +890,7 @@ func lcm(a, b int) int {
       {
         name: "Bit tricks",
         filename: "bits.go",
-        note: "math/bits is in the standard library and usually compiles to one instruction.",
+        note: "math/bits is standard library and usually compiles to one instruction.",
         code: `import "math/bits"
 
 bits.OnesCount(uint(n))      // popcount

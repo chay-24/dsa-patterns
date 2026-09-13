@@ -45,7 +45,7 @@ export const complexityGroups: ComplexityGroup[] = [
         name: "Slice / dynamic array",
         rows: [
           { op: "Index", value: "O(1)" },
-          { op: "Append", value: "O(1)", note: "amortised" },
+          { op: "Append", value: "O(1)", note: "on average" },
           { op: "Insert / delete middle", value: "O(n)" },
           { op: "Search (unsorted)", value: "O(n)" },
           { op: "Space", value: "O(n)" },
@@ -55,7 +55,7 @@ export const complexityGroups: ComplexityGroup[] = [
         name: "Hash map",
         rows: [
           { op: "Lookup", value: "O(1)", note: "O(n) worst case" },
-          { op: "Insert", value: "O(1)", note: "amortised" },
+          { op: "Insert", value: "O(1)", note: "on average" },
           { op: "Delete", value: "O(1)" },
           { op: "Iterate", value: "O(n)", note: "order randomised in Go" },
           { op: "Space", value: "O(n)" },
@@ -93,7 +93,7 @@ export const complexityGroups: ComplexityGroup[] = [
       {
         name: "Union-Find",
         rows: [
-          { op: "Find", value: "O(α(n))", note: "inverse Ackermann, under 5" },
+          { op: "Find", value: "O(α(n))", note: "effectively a constant" },
           { op: "Union", value: "O(α(n))" },
           { op: "Space", value: "O(n)" },
         ],
@@ -254,7 +254,7 @@ export const complexityGroups: ComplexityGroup[] = [
         name: "Monotonic stack / deque",
         rows: [
           { op: "Full scan", value: "O(n)" },
-          { op: "Per element", value: "O(1)", note: "amortised" },
+          { op: "Per element", value: "O(1)", note: "on average" },
           { op: "Space", value: "O(n)" },
         ],
       },
@@ -264,7 +264,7 @@ export const complexityGroups: ComplexityGroup[] = [
           { op: "1D linear", value: "O(n)" },
           { op: "2D grid / two strings", value: "O(m · n)" },
           { op: "Interval DP", value: "O(n³)" },
-          { op: "Knapsack", value: "O(n · W)", note: "pseudo-polynomial" },
+          { op: "Knapsack", value: "O(n · W)", note: "grows with W itself" },
           { op: "Bitmask DP", value: "O(2ⁿ · n)" },
         ],
       },

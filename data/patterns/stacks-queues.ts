@@ -18,9 +18,9 @@ export const stacksQueues: Pattern[] = [
     typicalQuestion: "Determine whether a string of brackets is balanced.",
     mentalModel: {
       lines: [
-        "A stack is a memory of unfinished business.",
-        "Push when something opens; pop when it resolves.",
-        "In Go a stack is just a slice — append to push, reslice to pop.",
+        "A stack remembers unfinished business.",
+        "Push when something opens, pop when it closes.",
+        "In Go a stack is just a slice: append to push, reslice to pop.",
       ],
       diagram: `  ( [ {        push
         ▲
@@ -30,13 +30,13 @@ export const stacksQueues: Pattern[] = [
   ]  matches [  → pop
   )  matches (  → pop
   empty at the end → balanced`,
-      key: "If the natural solution wants recursion but the depth is unbounded, use an explicit stack.",
+      key: "If the natural solution wants recursion but the depth is unknown, use a stack.",
     },
     templates: [
       {
         name: "Slice as a stack",
         filename: "stack.go",
-        note: "No container needed. Always check len before popping.",
+        note: "No container needed. Always check the length before popping.",
         code: `stack := []int{}
 
 stack = append(stack, v) // push
@@ -52,7 +52,7 @@ if len(stack) == 0 {
       {
         name: "Bracket matching",
         filename: "valid_parens.go",
-        note: "Push the expected closer — then the comparison is a single equality.",
+        note: "Push the closer you expect. Then the check is one comparison.",
         code: `func isValid(s string) bool {
     pair := map[byte]byte{'(': ')', '[': ']', '{': '}'}
     stack := make([]byte, 0, len(s))
@@ -73,7 +73,7 @@ if len(stack) == 0 {
       {
         name: "Min stack",
         filename: "min_stack.go",
-        note: "Store the running minimum alongside each value — O(1) for every operation.",
+        note: "Store the running minimum next to each value. Everything stays O(1).",
         code: `type MinStack struct {
     vals []int
     mins []int
@@ -98,7 +98,7 @@ func (s *MinStack) GetMin() int { return s.mins[len(s.mins)-1] }`,
       {
         name: "Nested decoding",
         filename: "decode_string.go",
-        note: "Two parallel stacks: one for repeat counts, one for partial results.",
+        note: "Two stacks side by side: one for counts, one for partial results.",
         code: `func decodeString(s string) string {
     counts := []int{}
     parts := []string{}
@@ -133,10 +133,10 @@ func (s *MinStack) GetMin() int { return s.mins[len(s.mins)-1] }`,
       { label: "Space", value: "O(n)" },
     ],
     variations: [
-      { name: "Two stacks for a queue", detail: "In-stack and out-stack; refill only when out is empty, giving amortised O(1)." },
+      { name: "Two stacks for a queue", detail: "An in-stack and an out-stack. Refill only when out is empty, so each item moves twice." },
       { name: "Stack with an aggregate", detail: "Min, max or sum can be carried per entry for O(1) queries." },
       { name: "Explicit recursion stack", detail: "Push a frame struct when converting a recursive DFS to a loop." },
-      { name: "Monotonic stack", detail: "Add an ordering invariant and it answers next-greater questions in O(n)." },
+      { name: "Monotonic stack", detail: "Keep the stack sorted and it answers next-greater questions in one pass." },
     ],
     mistakes: [
       { title: "Popping an empty stack", detail: "stack[len(stack)-1] panics at length zero. Guard every pop." },
@@ -163,22 +163,22 @@ func (s *MinStack) GetMin() int { return s.mins[len(s.mins)-1] }`,
     typicalQuestion: "Return a binary tree's nodes level by level.",
     mentalModel: {
       lines: [
-        "A queue is a schedule: what has been discovered but not yet processed.",
-        "In Go, a slice with a head index is the idiomatic queue.",
-        "Snapshot the length at the top of a loop to process exactly one level.",
+        "A queue is a to-do list: found, but not dealt with yet.",
+        "In Go, a slice with a moving front is the idiomatic queue.",
+        "Freeze the length at the top of the loop to handle exactly one level.",
       ],
       diagram: `  enqueue ─▶ [ a  b  c ] ─▶ dequeue
                 ▲       ▲
               head     tail
 
   level size = len(queue) at the start of the round`,
-      key: "BFS visits nodes in non-decreasing distance order — that is why the first arrival is the shortest path.",
+      key: "BFS reaches nodes in distance order, so the first time you arrive is the shortest way.",
     },
     templates: [
       {
         name: "Slice queue",
         filename: "queue.go",
-        note: "Reslicing from the front is O(1); the freed memory is reclaimed when the slice is replaced.",
+        note: "Reslicing the front is O(1). The old prefix is freed later.",
         code: `queue := []int{start}
 
 for len(queue) > 0 {
@@ -193,7 +193,7 @@ for len(queue) > 0 {
       {
         name: "Level by level",
         filename: "level_order.go",
-        note: "The size snapshot is what separates one level from the next.",
+        note: "The frozen size is what keeps one level from bleeding into the next.",
         code: `func levelOrder(root *TreeNode) [][]int {
     if root == nil {
         return nil
@@ -225,7 +225,7 @@ for len(queue) > 0 {
       {
         name: "Ring buffer",
         filename: "ring_queue.go",
-        note: "When memory must be bounded, use a fixed array with head and count.",
+        note: "When memory must stay fixed, use an array with a head and a count.",
         code: `type Ring struct {
     buf   []int
     head  int
@@ -261,7 +261,7 @@ func (q *Ring) Pop() (int, bool) {
       { label: "Space", value: "O(width)", note: "the widest level dominates" },
     ],
     variations: [
-      { name: "Deque", detail: "Push and pop at both ends — needed for monotonic-queue tricks and 0-1 BFS." },
+      { name: "Deque", detail: "Push and pop at both ends. Needed for window maximums and 0-1 BFS." },
       { name: "Priority queue", detail: "Ordered by priority rather than arrival; that is a heap." },
       { name: "Circular queue", detail: "Fixed capacity with wrap-around indices." },
       { name: "Multi-source BFS", detail: "Seed the queue with every source at once." },
@@ -278,7 +278,7 @@ func (q *Ring) Pop() (int, bool) {
     slug: "deque",
     title: "Deque & Monotonic Queue",
     category: "stacks-queues",
-    description: "A queue open at both ends — and the monotonic invariant that makes window extremes O(1).",
+    description: "A queue open at both ends, kept sorted so the window maximum is always at the front.",
     concepts: ["Both ends", "Window max", "Monotonic"],
     usedFor: ["sliding window maximum", "constrained DP transitions", "0-1 BFS", "shortest subarray with negatives"],
     signals: ["maximum of every window", "minimum in a range", "window of size k", "at most k apart", "0-1 weights"],
@@ -291,8 +291,8 @@ func (q *Ring) Pop() (int, bool) {
     typicalQuestion: "Return the maximum of every window of size k.",
     mentalModel: {
       lines: [
-        "Store indices, not values.",
-        "Before pushing i, pop every index whose value can never beat a[i] — they are dominated.",
+        "Keep a list of indices that could still win.",
+        "Before adding i, drop everything older and worse. It can never win again.",
         "The front is always the answer for the current window.",
       ],
       diagram: `  values  1  3  -1  -3  5
@@ -302,13 +302,13 @@ func (q *Ring) Pop() (int, bool) {
   push 5 → pops -3,-1 (all dominated)
 
   front = window max`,
-      key: "An element is useless the moment a newer, better element appears — delete it immediately.",
+      key: "An element is useless the moment a newer, better one arrives. Delete it right away.",
     },
     templates: [
       {
         name: "Window maximum",
         filename: "window_max.go",
-        note: "Each index is pushed once and popped once: O(n) total.",
+        note: "Each index goes in once and comes out once, so the whole scan is O(n).",
         code: `func maxSlidingWindow(nums []int, k int) []int {
     dq := []int{} // indices, values decreasing
     out := make([]int, 0, len(nums)-k+1)
@@ -334,7 +334,7 @@ func (q *Ring) Pop() (int, bool) {
       {
         name: "Shortest subarray with negatives",
         filename: "shortest_at_least_k.go",
-        note: "Increasing deque over prefix sums — plain windows fail once values can be negative.",
+        note: "Plain windows break once values can be negative. A deque over running totals does not.",
         code: `func shortestSubarray(nums []int, k int) int {
     n := len(nums)
     p := make([]int, n+1)
@@ -364,7 +364,7 @@ func (q *Ring) Pop() (int, bool) {
       {
         name: "DP with a window",
         filename: "constrained_dp.go",
-        note: "dp[i] = nums[i] + max(dp[i-k..i-1]) — the deque supplies that max in O(1).",
+        note: "dp[i] needs the best of the last k values. The deque hands that over in O(1).",
         code: `func constrainedSubsetSum(nums []int, k int) int {
     dp := make([]int, len(nums))
     dq := []int{}
@@ -390,11 +390,11 @@ func (q *Ring) Pop() (int, bool) {
       },
     ],
     complexity: [
-      { label: "Per element", value: "O(1)", note: "amortised — one push and one pop each" },
+      { label: "Per element", value: "O(1)", note: "on average: one push, one pop each" },
       { label: "Whole scan", value: "O(n)" },
       { label: "Space", value: "O(k)", note: "the deque never exceeds the window" },
     ],
-    why: "The deque holds exactly the indices that could still be the answer for some future window. When a new value arrives that is at least as good and strictly newer, every weaker older value is dominated forever — so discarding it costs nothing and keeps the front correct.",
+    why: "The deque holds exactly the indices that could still be the answer for some future window. When a newer value arrives that is at least as good, every older weaker value is beaten forever, so dropping it is free and the front stays correct.",
     variations: [
       { name: "Window minimum", detail: "Flip the comparison to keep values increasing." },
       { name: "0-1 BFS", detail: "Push zero-weight edges to the front and one-weight edges to the back — Dijkstra without a heap." },
@@ -425,9 +425,9 @@ func (q *Ring) Pop() (int, bool) {
     typicalQuestion: "For each day, how many days until a warmer temperature?",
     mentalModel: {
       lines: [
-        "Keep the stack monotonic — increasing or decreasing by value.",
-        "When the new element breaks the order, pop: the new element is the answer for everything popped.",
-        "Each index is pushed once and popped once, so the whole scan is linear.",
+        "Keep the stack sorted, either increasing or decreasing.",
+        "When a new value breaks that order, pop.",
+        "Whatever you pop has just found its answer: the new value.",
       ],
       diagram: `  decreasing stack (for next greater)
 
@@ -436,13 +436,13 @@ func (q *Ring) Pop() (int, bool) {
 
   [ 75  71  69 ]   ← still waiting
               ▲ top`,
-      key: "The pop is the event. Whatever you need to record, record it there.",
+      key: "The pop is the event. Record whatever you need right there.",
     },
     templates: [
       {
         name: "Next greater",
         filename: "next_greater.go",
-        note: "Decreasing stack of indices. Anything left over has no next greater element.",
+        note: "Decreasing stack of indices. Anything left at the end has no answer.",
         code: `func nextGreater(nums []int) []int {
     out := make([]int, len(nums))
     for i := range out {
@@ -464,7 +464,7 @@ func (q *Ring) Pop() (int, bool) {
       {
         name: "Previous smaller",
         filename: "previous_smaller.go",
-        note: "Increasing stack. After popping, the top is the nearest smaller element to the left.",
+        note: "Increasing stack. After popping, the top is the nearest smaller to the left.",
         code: `func previousSmaller(nums []int) []int {
     out := make([]int, len(nums))
     stack := []int{} // indices, values increasing
@@ -486,7 +486,7 @@ func (q *Ring) Pop() (int, bool) {
       {
         name: "Circular",
         filename: "circular_nge.go",
-        note: "Iterate 2n times and index modulo n; only push during the first pass.",
+        note: "Go round twice, index modulo n, and only push on the first lap.",
         code: `func nextGreaterCircular(nums []int) []int {
     n := len(nums)
     out := make([]int, n)
@@ -512,63 +512,38 @@ func (q *Ring) Pop() (int, bool) {
       {
         name: "Contribution counting",
         filename: "subarray_minimums.go",
-        note: "Each element is the minimum of (i - prevSmaller) * (nextSmaller - i) subarrays.",
-        code: `func sumSubarrayMins(a []int) int {
+        note: "Instead of listing subarrays, count how many each element rules.",
+        code: `// a[i] is the minimum of (i - prev[i]) * (next[i] - i) subarrays
+func sumSubarrayMins(a []int) int {
     const mod = 1_000_000_007
-    n := len(a)
-    left := make([]int, n)  // distance to previous smaller (strict)
-    right := make([]int, n) // distance to next smaller-or-equal
-    stack := []int{}
-
-    for i := 0; i < n; i++ {
-        for len(stack) > 0 && a[stack[len(stack)-1]] >= a[i] {
-            stack = stack[:len(stack)-1]
-        }
-        if len(stack) == 0 {
-            left[i] = i + 1
-        } else {
-            left[i] = i - stack[len(stack)-1]
-        }
-        stack = append(stack, i)
-    }
-
-    stack = stack[:0]
-    for i := n - 1; i >= 0; i-- {
-        for len(stack) > 0 && a[stack[len(stack)-1]] > a[i] {
-            stack = stack[:len(stack)-1]
-        }
-        if len(stack) == 0 {
-            right[i] = n - i
-        } else {
-            right[i] = stack[len(stack)-1] - i
-        }
-        stack = append(stack, i)
-    }
+    prev, next := smallerBounds(a) // see next smaller element
 
     total := 0
     for i, v := range a {
-        total = (total + v*left[i]%mod*right[i]) % mod
+        left := i - prev[i]  // choices for the start
+        right := next[i] - i // choices for the end
+        total = (total + v*left%mod*right) % mod
     }
     return total
 }`,
       },
     ],
     complexity: [
-      { label: "Time", value: "O(n)", note: "each index pushed once, popped once" },
-      { label: "Space", value: "O(n)", note: "worst case the whole array is on the stack" },
+      { label: "Time", value: "O(n)", note: "each index goes on once, off once" },
+      { label: "Space", value: "O(n)", note: "at worst the whole array is on it" },
     ],
-    why: "The inner while loop looks like it could make this quadratic, but every iteration of it permanently removes an index from the stack. Across the entire outer loop at most n indices are ever pushed, so at most n pops happen in total.",
+    why: "The inner loop looks like it could be quadratic, but every turn of it removes an index for good. At most n indices ever go on the stack, so at most n come off across the whole scan.",
     variations: [
       { name: "Four flavours", detail: "next/previous × greater/smaller. Direction of iteration picks next vs previous; the comparison picks greater vs smaller." },
       { name: "Strict versus non-strict", detail: "Using >= instead of > decides how ties are attributed — critical for contribution counting to avoid double counting." },
       { name: "Sentinel values", detail: "Appending a 0 or -infinity at the end flushes the stack without a separate cleanup loop." },
-      { name: "Lexicographic greedy", detail: "Remove-k-digits and remove-duplicate-letters keep the stack increasing while a removal budget lasts." },
+      { name: "Smallest-string greedy", detail: "Remove-k-digits keeps the stack increasing while you still have removals left." },
     ],
     mistakes: [
       { title: "Storing values instead of indices", detail: "Distances and spans need positions." },
       { title: "Double counting on ties", detail: "Make one side strict and the other non-strict, or equal values are counted twice." },
       { title: "Forgetting the leftovers", detail: "Indices still on the stack at the end have no answer — initialise the output accordingly." },
-      { title: "Wrong monotonic direction", detail: "Next greater needs a decreasing stack. Write down which comparison pops before you code." },
+      { title: "Stack sorted the wrong way", detail: "Next greater needs a decreasing stack. Write down which comparison pops before you code." },
     ],
     related: ["next-greater-element", "next-smaller-element", "largest-rectangle", "deque"],
     problems: [739, 496, 503, 84, 85, 907, 402, 316, 42, 901, 1019],
@@ -577,7 +552,7 @@ func (q *Ring) Pop() (int, bool) {
     slug: "next-greater-element",
     title: "Next Greater Element",
     category: "stacks-queues",
-    description: "For every position, the first larger value to its right — the canonical monotonic-stack use.",
+    description: "For every position, the first larger value to its right. The classic monotonic stack.",
     concepts: ["Right scan", "Decreasing stack", "Circular"],
     usedFor: ["waiting-time problems", "next larger lookups", "circular variants"],
     signals: ["next greater", "next warmer", "first larger to the right", "days until", "circular array"],
@@ -589,9 +564,9 @@ func (q *Ring) Pop() (int, bool) {
     typicalQuestion: "For each element, find the next greater element to its right.",
     mentalModel: {
       lines: [
-        "Keep a stack of indices still waiting for an answer, with decreasing values.",
-        "A new larger value resolves every waiting index it beats.",
-        "Whatever is still waiting at the end has no answer.",
+        "Keep a stack of indices still waiting for an answer.",
+        "A bigger value arrives and settles every index it beats.",
+        "Whatever is still waiting at the end never gets one.",
       ],
       diagram: `  73 74 75 71 69 72
 
@@ -599,7 +574,7 @@ func (q *Ring) Pop() (int, bool) {
   75 resolves 74     → 1 day
   72 resolves 69, 71 → 1, 2 days
   75 never resolved  → 0`,
-      key: "Scan left to right with a decreasing stack; every pop is one answered question.",
+      key: "Sweep left to right with a decreasing stack. Every pop answers one question.",
     },
     templates: [
       {
@@ -624,7 +599,7 @@ func (q *Ring) Pop() (int, bool) {
       {
         name: "Via a lookup map",
         filename: "nge_map.go",
-        note: "When the query array is a subset, precompute over the full array into a map.",
+        note: "When the query list is a subset, precompute over the full array first.",
         code: `func nextGreaterElementI(nums1, nums2 []int) []int {
     next := map[int]int{}
     stack := []int{}
@@ -682,22 +657,22 @@ func (q *Ring) Pop() (int, bool) {
     typicalQuestion: "For each element, find the span in which it is the minimum.",
     mentalModel: {
       lines: [
-        "previousSmaller(i) and nextSmaller(i) bracket the maximal range where a[i] is the minimum.",
-        "That range has (i - prev) × (next - i) subarrays containing i where a[i] is minimal.",
-        "An increasing stack finds both in one pass each.",
+        "Find the nearest smaller value on the left and on the right.",
+        "Between those two walls, this element is the smallest.",
+        "That window is exactly where it counts.",
       ],
       diagram: `  a =  2  1  5  6  2  3
              ▲
         for a[2]=5: prev smaller = 1 (idx 1)
                     next smaller = 2 (idx 4)
         span = indices 2..3, width 2`,
-      key: "Make one side strict and the other non-strict, or equal values double count.",
+      key: "Make one side strict and the other not, or equal values get counted twice.",
     },
     templates: [
       {
         name: "Both boundaries",
         filename: "smaller_bounds.go",
-        note: "prev uses >= (strict left), next uses > (non-strict right) — ties break exactly once.",
+        note: "Left uses >= and right uses >, so a tie is broken exactly once.",
         code: `func smallerBounds(a []int) (prev, next []int) {
     n := len(a)
     prev = make([]int, n)
@@ -763,8 +738,8 @@ func (q *Ring) Pop() (int, bool) {
     mentalModel: {
       lines: [
         "Keep a decreasing stack of (value, span) pairs.",
-        "When a new value dominates the top, absorb its span and pop.",
-        "The accumulated span is the answer, and the new pair carries it forward.",
+        "A bigger value swallows the spans of everything it pops.",
+        "The total it swallowed is the answer.",
       ],
       diagram: `  prices  100  80  60  70  60  75
 
@@ -772,13 +747,13 @@ func (q *Ring) Pop() (int, bool) {
      → span = 1 + 1 + 2 = 4
 
   stack: (100,1) (80,1) (75,4)`,
-      key: "Collapsing spans into the surviving element is what keeps it O(1) amortised.",
+      key: "Folding spans into the survivor is what keeps this O(1) on average.",
     },
     templates: [
       {
         name: "Online span",
         filename: "stock_span.go",
-        note: "Each price is pushed once and popped once across the whole stream.",
+        note: "Each price goes on once and comes off once across the whole stream.",
         code: `type StockSpanner struct {
     stack [][2]int // {price, span}
 }
@@ -826,9 +801,9 @@ func (s *StockSpanner) Next(price int) int {
     typicalQuestion: "Find the largest rectangle that fits inside a histogram.",
     mentalModel: {
       lines: [
-        "Fix a bar as the limiting height.",
-        "Extend left and right until you hit a shorter bar.",
-        "That width times this height is the best rectangle with this bar as the minimum.",
+        "Pick a bar and call it the shortest one in the rectangle.",
+        "Stretch left and right until you hit something shorter.",
+        "That width times this height is the best rectangle for this bar.",
       ],
       diagram: `        ┌─┐
     ┌─┐ │ │
@@ -838,13 +813,13 @@ func (s *StockSpanner) Next(price int) int {
   2  1  5  6  2
 
   bar 5: left bound idx1, right bound idx4 → width 2, area 10`,
-      key: "The stack pop tells you both boundaries at once.",
+      key: "The stack pop hands you both walls at once.",
     },
     templates: [
       {
         name: "Histogram",
         filename: "largest_rectangle.go",
-        note: "The sentinel 0 at the end flushes everything still on the stack.",
+        note: "The 0 at the end forces everything still on the stack to be flushed.",
         code: `func largestRectangleArea(heights []int) int {
     stack := []int{} // indices, heights increasing
     best := 0
@@ -873,7 +848,7 @@ func (s *StockSpanner) Next(price int) int {
       {
         name: "Maximal rectangle",
         filename: "maximal_rectangle.go",
-        note: "Build a histogram per row, then run the histogram solver once per row.",
+        note: "Build a histogram per row, then run the histogram solver on each.",
         code: `func maximalRectangle(matrix [][]byte) int {
     if len(matrix) == 0 {
         return 0
@@ -900,7 +875,7 @@ func (s *StockSpanner) Next(price int) int {
       { label: "Matrix", value: "O(rows · cols)" },
       { label: "Space", value: "O(cols)" },
     ],
-    why: "For each bar there is exactly one maximal rectangle in which it is the shortest bar. Those n rectangles include the global optimum, and the monotonic stack finds all n in linear time by reading both boundaries off the pop.",
+    why: "Every bar has exactly one biggest rectangle in which it is the shortest bar. Those n rectangles include the winner, and the stack finds all n in one pass because each pop reveals both walls.",
     variations: [
       { name: "Trapping rain water", detail: "Same boundary idea inverted — the water level is the minimum of the two enclosing maxima." },
       { name: "Maximal square", detail: "Easier as a DP: dp = 1 + min of three neighbours." },
@@ -931,9 +906,9 @@ func (s *StockSpanner) Next(price int) int {
     typicalQuestion: "What is the minimum number of moves to reach the target state?",
     mentalModel: {
       lines: [
-        "BFS expands in rings of equal distance.",
-        "The first time you reach a node is along a shortest path — so mark visited on enqueue.",
-        "Processing one level at a time turns the ring index into the distance.",
+        "BFS spreads out in rings, one step at a time.",
+        "So the first time you reach a node, you got there the fastest way.",
+        "Mark a node the moment you queue it, never when you take it out.",
       ],
       diagram: `  level 0     ●
   level 1   ● ● ●
@@ -941,13 +916,13 @@ func (s *StockSpanner) Next(price int) int {
 
   queue holds one frontier at a time
   distance = number of levels expanded`,
-      key: "Mark visited when you enqueue, never when you dequeue.",
+      key: "Mark visited when you enqueue. Marking on dequeue is the classic blow-up.",
     },
     templates: [
       {
         name: "Level counting",
         filename: "bfs_levels.go",
-        note: "The size snapshot turns levels into a step counter.",
+        note: "The frozen size turns rings into a step counter.",
         code: `func shortestSteps(start State, isGoal func(State) bool, next func(State) []State) int {
     seen := map[State]bool{start: true}
     queue := []State{start}
@@ -977,7 +952,7 @@ func (s *StockSpanner) Next(price int) int {
       {
         name: "Distance array",
         filename: "bfs_dist.go",
-        note: "When you want every distance, store them instead of counting levels.",
+        note: "When you want every distance, store them instead of counting rings.",
         code: `func bfsDistances(adj [][]int, src int) []int {
     dist := make([]int, len(adj))
     for i := range dist {
@@ -1002,7 +977,7 @@ func (s *StockSpanner) Next(price int) int {
       {
         name: "Grid BFS",
         filename: "grid_bfs.go",
-        note: "Directions as a small table keeps the bounds check in one place.",
+        note: "A direction table keeps the bounds check in one place.",
         code: `var dirs = [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 
 func gridBFS(grid [][]int, sr, sc int) [][]int {
@@ -1042,7 +1017,7 @@ func gridBFS(grid [][]int, sr, sc int) [][]int {
     complexity: [
       { label: "Time", value: "O(V + E)" },
       { label: "Grid", value: "O(rows · cols)" },
-      { label: "Space", value: "O(V)", note: "the frontier can be as wide as the graph" },
+      { label: "Space", value: "O(V)", note: "the ring can be as wide as the graph" },
     ],
     variations: [
       { name: "Multi-source", detail: "Seed the queue with every source at distance 0." },
@@ -1052,7 +1027,7 @@ func gridBFS(grid [][]int, sr, sc int) [][]int {
     ],
     mistakes: [
       { title: "Marking visited on dequeue", detail: "The same node gets enqueued many times; the queue explodes and the run degrades badly." },
-      { title: "Using BFS on weighted edges", detail: "Unequal weights break the level invariant — you need Dijkstra." },
+      { title: "Using BFS on weighted edges", detail: "Unequal costs break the ring logic. You need Dijkstra." },
       { title: "Forgetting the level snapshot", detail: "Without it, the step count is wrong." },
       { title: "Checking the goal only on enqueue or only on dequeue", detail: "Pick one and be consistent; checking on enqueue exits one level earlier." },
     ],
@@ -1075,9 +1050,9 @@ func gridBFS(grid [][]int, sr, sc int) [][]int {
     typicalQuestion: "Design a circular queue with O(1) enqueue and dequeue.",
     mentalModel: {
       lines: [
-        "Store head and count, not head and tail — it removes the full/empty ambiguity.",
-        "The tail is derived: (head + count) % capacity.",
-        "Every index calculation goes through one modulo.",
+        "Store a head and a count, not a head and a tail.",
+        "The tail is just (head + count) mod capacity.",
+        "Every index goes through one modulo.",
       ],
       diagram: `  capacity 5, head = 3, count = 4
 
@@ -1085,13 +1060,13 @@ func gridBFS(grid [][]int, sr, sc int) [][]int {
       [c] [d]  ·  [a] [b]
                    ▲head
   tail = (3 + 4) % 5 = 2`,
-      key: "head + count beats head + tail: empty and full stop looking identical.",
+      key: "head plus count beats head plus tail: full and empty stop looking the same.",
     },
     templates: [
       {
         name: "Circular queue",
         filename: "circular_queue.go",
-        note: "No sacrificed slot, no ambiguity, every operation O(1).",
+        note: "No wasted slot, no ambiguity, every operation O(1).",
         code: `type MyCircularQueue struct {
     buf   []int
     head  int
@@ -1103,7 +1078,7 @@ func Constructor(k int) MyCircularQueue {
 }
 
 func (q *MyCircularQueue) EnQueue(v int) bool {
-    if q.IsFull() {
+    if q.count == len(q.buf) {
         return false
     }
     q.buf[(q.head+q.count)%len(q.buf)] = v
@@ -1112,7 +1087,7 @@ func (q *MyCircularQueue) EnQueue(v int) bool {
 }
 
 func (q *MyCircularQueue) DeQueue() bool {
-    if q.IsEmpty() {
+    if q.count == 0 {
         return false
     }
     q.head = (q.head + 1) % len(q.buf)
@@ -1120,27 +1095,13 @@ func (q *MyCircularQueue) DeQueue() bool {
     return true
 }
 
-func (q *MyCircularQueue) Front() int {
-    if q.IsEmpty() {
-        return -1
-    }
-    return q.buf[q.head]
-}
-
-func (q *MyCircularQueue) Rear() int {
-    if q.IsEmpty() {
-        return -1
-    }
-    return q.buf[(q.head+q.count-1)%len(q.buf)]
-}
-
-func (q *MyCircularQueue) IsEmpty() bool { return q.count == 0 }
-func (q *MyCircularQueue) IsFull() bool  { return q.count == len(q.buf) }`,
+func (q *MyCircularQueue) Front() int { return q.buf[q.head] }
+func (q *MyCircularQueue) Rear() int  { return q.buf[(q.head+q.count-1)%len(q.buf)] }`,
       },
       {
         name: "Circular deque",
         filename: "circular_deque.go",
-        note: "Pushing to the front moves head backwards — add len before the modulo.",
+        note: "Pushing to the front moves head backwards, so add len before the modulo.",
         code: `func (q *MyCircularDeque) InsertFront(v int) bool {
     if q.IsFull() {
         return false
@@ -1194,9 +1155,10 @@ func (q *MyCircularDeque) DeleteLast() bool {
     typicalQuestion: "Find the k-th largest element in a stream.",
     mentalModel: {
       lines: [
-        "A heap is a partially ordered tree: only the path to the root is sorted.",
-        "That is enough to expose the extreme in O(1) and repair in O(log n).",
-        "For k largest, keep a MIN-heap of size k — the root is the weakest survivor.",
+        "A heap only keeps the path to the top sorted.",
+        "That is enough to read the best element instantly and fix the rest in log n.",
+        "For the k largest, keep a MIN-heap of size k.",
+        "Its root is the weakest one you are still holding.",
       ],
       diagram: `  k largest of n, k = 3
 
@@ -1205,13 +1167,13 @@ func (q *MyCircularDeque) DeleteLast() bool {
 
   new 10 > 7 → pop 7, push 10
   new  4 < 7 → ignore`,
-      key: "k largest → min-heap of size k. k smallest → max-heap of size k. Always the opposite of your instinct.",
+      key: "k largest wants a min-heap. k smallest wants a max-heap. Always the opposite of your instinct.",
     },
     templates: [
       {
         name: "container/heap",
         filename: "int_heap.go",
-        note: "Five methods. Pop must return the last element after heap has swapped it into place.",
+        note: "Five methods. Pop must return the last element, after heap moved it there.",
         code: `import "container/heap"
 
 type IntHeap []int
@@ -1239,7 +1201,7 @@ peek := (*h)[0]`,
       {
         name: "Heap of structs",
         filename: "item_heap.go",
-        note: "The common shape for Dijkstra and scheduling problems.",
+        note: "The shape you want for Dijkstra and for scheduling.",
         code: `type Item struct {
     Node int
     Dist int
@@ -1263,7 +1225,7 @@ func (p *PQ) Pop() any {
       {
         name: "Top k",
         filename: "top_k.go",
-        note: "Size-k min-heap: O(n log k) time, O(k) space.",
+        note: "A size-k min-heap: O(n log k) time and O(k) memory.",
         code: `func findKthLargest(nums []int, k int) int {
     h := &IntHeap{}
     heap.Init(h)
@@ -1280,7 +1242,7 @@ func (p *PQ) Pop() any {
       {
         name: "Two heaps",
         filename: "median_stream.go",
-        note: "Max-heap for the low half, min-heap for the high half, sizes within one.",
+        note: "A max-heap for the low half, a min-heap for the high half, sizes within one.",
         code: `type MedianFinder struct {
     low  *MaxHeap // largest of the small half
     high *MinHeap // smallest of the large half
@@ -1312,13 +1274,13 @@ func (m *MedianFinder) FindMedian() float64 {
     ],
     variations: [
       { name: "Max-heap", detail: "Flip Less, or push negated values into a min-heap." },
-      { name: "Lazy deletion", detail: "Cannot remove an arbitrary element cheaply — push a replacement and skip stale entries on pop." },
+      { name: "Lazy deletion", detail: "You cannot cheaply remove something from the middle. Push a replacement and skip stale entries on pop." },
       { name: "Quickselect instead", detail: "For a one-off k-th element, quickselect is O(n) average and beats a heap." },
       { name: "Bucket sort instead", detail: "When keys are bounded frequencies, buckets give O(n) top-k." },
     ],
     mistakes: [
       { title: "Using the wrong heap direction", detail: "k largest needs a min-heap. Getting this backwards is the most common heap bug." },
-      { title: "Calling h.Push instead of heap.Push", detail: "The interface method does not restore the heap invariant — always go through the package function." },
+      { title: "Calling h.Push instead of heap.Push", detail: "The plain method does not re-sort the heap. Always go through the package function." },
       { title: "Pop returning the wrong element", detail: "container/heap moves the target to the end before calling Pop; return old[n-1]." },
       { title: "n pushes instead of heap.Init", detail: "Init is O(n); pushing one by one is O(n log n)." },
     ],
