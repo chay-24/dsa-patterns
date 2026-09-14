@@ -16,6 +16,14 @@ export const trees: Pattern[] = [
       "results must combine children before the parent — that is postorder",
     ],
     typicalQuestion: "Return the inorder traversal of a binary tree.",
+    teach: [
+      "Visiting every node in a tree is three lines of recursion: handle the node, go left, go right. What changes between the three traversals is only where you put the first line.",
+      "Put the work before the two calls and you get preorder: you see a node on the way down, before its children. That is what you want when you are copying a tree or writing it out, because you need the parent before you can attach children to it.",
+      "Put it between the two calls and you get inorder. On a binary search tree this is the important one: everything smaller comes first, so the values come out sorted. A surprising number of BST problems are just that fact in disguise.",
+      "Put it after both calls and you get postorder. Now every child has already reported back, so you can combine their answers. Heights, sums, and anything where a node's answer depends on its subtrees is postorder.",
+      "So the question to ask is not 'which traversal' but 'do I need my children's answers before I can decide?'. If yes, postorder. If you are handing information down instead, preorder.",
+      "One practical note: writing a tree out and reading it back needs explicit markers for the missing children. Without them, the same sequence of values can describe several different shapes.",
+    ],
     mentalModel: {
       lines: [
         "One recursion, three places to do the work.",
@@ -166,6 +174,14 @@ func deserialize(data string) *TreeNode {
       "the tree must be validated against a rule at every node",
     ],
     typicalQuestion: "What is the maximum depth of this binary tree?",
+    teach: [
+      "Almost every tree problem is one recursive function, and almost every bug is in its signature rather than its body.",
+      "Before writing anything, answer two questions. What travels down the tree as arguments? And what travels back up as the return value?",
+      "Down is for context a node cannot work out on its own — a running total, an allowed range of values, the depth so far. Up is for facts a parent needs — a height, a sum, a yes or no.",
+      "Validating a binary search tree shows why this matters. The tempting check is that each node sits between its two children. That passes on trees that are clearly invalid, because a node far down the left branch can still be larger than an ancestor. What you actually inherit from above is a range: everything in this subtree must lie between low and high. Going left tightens the high end, going right tightens the low end.",
+      "When a parent needs several facts, return them together. Checking whether a tree is balanced needs both the height and whether anything below was already unbalanced. Returning just the height forces a second pass and turns a linear solution into a quadratic one.",
+      "And if you are collecting paths rather than aggregating, remember to undo. Append on the way in, remove on the way out, and copy the slice before storing it — otherwise every saved path points at the same memory and they all end up identical.",
+    ],
     mentalModel: {
       lines: [
         "Decide two things before you write anything.",
@@ -299,6 +315,14 @@ func deserialize(data string) *TreeNode {
       "the question is about rows, siblings or width",
     ],
     typicalQuestion: "Return the values of the nodes visible from the right side.",
+    teach: [
+      "Some questions are not about the shape of a tree but about its depth. The rightmost node on each row. The widest row. The first leaf.",
+      "Depth-first search wanders down one branch and comes back, so it meets nodes in an order that has nothing to do with their depth. Breadth-first search handles the tree one row at a time, which is exactly what these questions want.",
+      "Put the root in a queue. Then repeat: take everything currently in the queue, handle it, and add its children.",
+      "That word 'currently' is the whole technique. Save the queue length before you start the row, and process exactly that many nodes. The children you add during the row belong to the next row, and if you keep checking len(queue) as you go, the rows run together.",
+      "Once the rows are separate, the variations are small. Keep the last node of each row for a right side view. Keep the largest for a per-row maximum. Fill the row backwards on alternate rows for a zigzag.",
+      "BFS also wins on minimum depth, because it stops at the first leaf it meets rather than exploring a long branch first.",
+    ],
     mentalModel: {
       lines: [
         "Put the root in a queue, then handle exactly one level at a time.",
@@ -447,6 +471,14 @@ func deserialize(data string) *TreeNode {
       "recursion depth is a stated concern",
     ],
     typicalQuestion: "Implement an iterator over a BST returning values in ascending order.",
+    teach: [
+      "Recursion walks a tree beautifully, but it gives you no way to pause. If you need an iterator that hands back one value per call, or you want to stop after the kth element, you need the stack in your own hands.",
+      "So build it. The recursion's call stack was holding nodes you had gone past but not finished with. Keep exactly that.",
+      "For inorder: go left as far as you can, pushing every node you pass. When you cannot go left any more, pop — that node is next in order, because everything to its left is done. Then step once to the right and start diving left again.",
+      "That gives you a BST iterator with no extra work. The stack only ever holds one root-to-node path, so it is O(h) memory, and each Next costs O(1) on average across the whole traversal.",
+      "Preorder is easier: push the root, then repeatedly pop and push its children — right first, because a stack reverses the order and you want left to come out first.",
+      "Postorder done directly is fiddly. The trick is to do preorder but visit right before left, then reverse the whole result at the end. Same answer, a fraction of the code.",
+    ],
     mentalModel: {
       lines: [
         "The stack holds nodes you have gone past but not used yet.",
@@ -581,6 +613,14 @@ func postorderIterative(root *TreeNode) []int {
       "you need a predecessor, successor or rank",
     ],
     typicalQuestion: "Validate that a binary tree is a binary search tree.",
+    teach: [
+      "A binary search tree adds one promise to an ordinary tree: everything in a node's left subtree is smaller than it, and everything on the right is larger.",
+      "That promise turns a search into a decision. Compare with the node, and one whole subtree disappears. It is binary search, walking pointers instead of indices.",
+      "It also means an inorder traversal comes out sorted — left subtree, then the node, then the right. Once you notice that, 'find the kth smallest' becomes an inorder walk you stop after k steps, rather than anything clever.",
+      "Insertion is easier in Go than it looks, if you let the recursion do the work. Have it return the subtree and assign the result back: root.Left = insert(root.Left, v). Then the nil case just returns a new node and it attaches itself.",
+      "Deletion has one interesting case. A node with no children, or with one, is simple. A node with two cannot be removed directly, so copy in the next-largest value — the leftmost node of the right subtree — and then delete that node instead, which by definition has at most one child.",
+      "Finally, be honest about the cost. All of this is O(h), the height. Balanced that is log n; fed sorted input the tree is a straight line and it is n. Say which you mean.",
+    ],
     mentalModel: {
       lines: [
         "Everything on the left is smaller. Everything on the right is bigger.",
@@ -716,6 +756,13 @@ func insertIntoBST(root *TreeNode, v int) *TreeNode {
       "many LCA queries on a static tree — precompute with binary lifting",
     ],
     typicalQuestion: "Find the lowest common ancestor of two nodes in a binary tree.",
+    teach: [
+      "Given two nodes, find the deepest node that has both of them somewhere underneath it. That node is where their two paths from the root split apart.",
+      "The recursion is surprisingly short. At each node, ask the left subtree and the right subtree whether either target is down there. Return whatever you find upwards.",
+      "Now the three cases. If both sides came back with something, the two targets are on opposite sides of this node — so this node is the split, and it is the answer. If only one side came back, both targets are down that way, so pass that answer along. If neither, return nothing.",
+      "On a binary search tree it is simpler still: no recursion needed. Walk down from the root. While both targets are smaller than the current node, go left. While both are larger, go right. The first node where they disagree is the split.",
+      "One caveat on the general version: it assumes both nodes actually exist in the tree. If they might not, it will happily return the one node it did find. If that matters, return a count alongside the node.",
+    ],
     mentalModel: {
       lines: [
         "Send a signal up when you find either node.",
@@ -835,6 +882,14 @@ func (l *LCA) Query(u, v int) int {
       "a serialised string must round-trip back into a tree",
     ],
     typicalQuestion: "Build the tree from its preorder and inorder traversals.",
+    teach: [
+      "You are handed two traversals of the same tree and asked to rebuild it. It feels like there is not enough information, but between them there is exactly enough.",
+      "Preorder gives you the root immediately — it is the first value. Postorder gives it to you too, as the last value.",
+      "Inorder gives you the other half. Find the root inside it, and everything to its left is the left subtree, everything to its right is the right subtree. Now you know how big each side is.",
+      "So take the root, split the inorder list, and recurse on the two halves with the matching slices of the preorder list. The tree assembles itself.",
+      "The one thing that makes this fast or slow is finding the root inside the inorder list. Scanning for it each time is O(n) per node and the whole build becomes quadratic. Build a map from value to position once at the start and every lookup is instant.",
+      "Watch the direction when you have postorder instead. You consume it from the back, and the value just before a root belongs to the right subtree — so you must build the right side before the left.",
+    ],
     mentalModel: {
       lines: [
         "Preorder tells you the root first. Postorder tells you the root last.",
@@ -957,6 +1012,14 @@ func (l *LCA) Query(u, v int) int {
       "the same question must be answered for every possible root — rerooting",
     ],
     typicalQuestion: "Rob houses arranged in a tree without robbing two directly connected ones.",
+    teach: [
+      "Rob houses laid out as a tree, where robbing a house means you cannot rob its neighbours. A single number per node cannot express this: the best total for a subtree depends on whether you touched its root.",
+      "So give each node more than one answer. Here two: the best total if you rob this node, and the best if you skip it.",
+      "Now the combination is obvious. If you rob this node, its children must be skipped, so add their skip values. If you skip it, each child is free to do whichever is better for itself.",
+      "Every node reports both numbers to its parent, and the answer at the root is the better of its two.",
+      "Why does DP work so cleanly here? Because a tree has no cycles. Once the parent has made its decision, the subtrees cannot influence one another — they are genuinely separate problems. That is also why you need no memo table: each node is visited exactly once.",
+      "The pattern generalises by adding states. Covering every node with cameras needs three: has a camera, is covered by a child, is not yet covered. Write the states down first, then the transitions almost write themselves.",
+    ],
     mentalModel: {
       lines: [
         "Give each node a few states, like taken or not taken.",
@@ -1092,6 +1155,14 @@ func sumOfDistances(n int, adj [][]int) []int {
       "the value returned to the parent differs from the value recorded globally",
     ],
     typicalQuestion: "Find the length of the longest path between any two nodes in a tree.",
+    teach: [
+      "Find the longest path between any two nodes. The path does not have to go through the root, which is what makes this harder than it first looks.",
+      "Here is the observation that cracks it. Every path in a tree has one highest node — the point where it stops going up and starts going down. Call that the bend.",
+      "At the bend, the path is: the deepest reach into the left child, plus this node, plus the deepest reach into the right child. So if you visit every node and treat each one as the bend, you are guaranteed to have considered the true longest path.",
+      "But there is a catch, and it is the thing people get wrong. You cannot return that combined length to your parent. A parent extending your path can only continue down one branch — going down both would make a Y, and a Y is not a path.",
+      "So split the two jobs. Record the two-branch total in a variable outside the recursion, and return only the better single branch upwards. Once you see that split, maximum-path-sum is the same function with values instead of ones, and with negative branches clamped to zero because taking nothing is always allowed.",
+      "On a general unweighted tree there is a neat alternative: walk to the farthest node from anywhere, then walk to the farthest node from there. That second node is the other end of a longest path.",
+    ],
     mentalModel: {
       lines: [
         "Every path turns at exactly one node.",
@@ -1223,6 +1294,14 @@ func sumOfDistances(n int, adj [][]int) []int {
       "wildcards in the query mean the search must fork",
     ],
     typicalQuestion: "Implement insert, search and startsWith for a dictionary of words.",
+    teach: [
+      "You have a dictionary of words and you keep asking whether anything starts with a given prefix. Checking every word costs the size of the dictionary each time.",
+      "But words that start the same way share a beginning, and you are re-reading that shared beginning over and over. So store it once.",
+      "Build a tree where each edge is a letter, so each node stands for a prefix. 'car' and 'cat' walk the same path for two letters and then split. Looking anything up means walking the letters of the query, which costs the length of the word — no matter whether the dictionary has ten words or ten million.",
+      "One detail is easy to forget. Reaching a node means the prefix exists, not that the word does. If you only ever inserted 'apple', the node at 'app' exists, so you need a flag on each node marking where a real word ends.",
+      "For lowercase input, give each node a [26]*Trie array rather than a map. No hashing, better memory layout, and the code is shorter.",
+      "The real payoff is pruning. Searching a grid for a hundred words, you walk the board and the trie together, and the instant the current path has no matching child you stop — you have just ruled out every word starting that way, all at once.",
+    ],
     mentalModel: {
       lines: [
         "Each edge is a letter. Each node is a prefix.",
@@ -1427,6 +1506,14 @@ func (t *BitTrie) MaxXor(x int) int {
       "you need to update whole ranges as well as read them, so you need lazy updates",
     ],
     typicalQuestion: "Support range sum queries and point updates on a mutable array.",
+    teach: [
+      "Prefix sums answer range questions instantly, but they assume the array never changes. Change one value and you have to rebuild everything after it.",
+      "A segment tree keeps the speed and allows updates. Build a binary tree over the array where each node stores the answer for one slice: the root covers everything, its children cover each half, and the leaves are single elements.",
+      "Now a range query is a small jigsaw. Any range you ask for can be tiled by about log n of these nodes — take the ones fully inside your range, skip the ones fully outside, and split the ones that straddle the edge. Combine their stored answers and you are done.",
+      "An update is one path. Change a leaf, then walk up to the root fixing each parent, which is log n nodes.",
+      "Reach for it when prefix sums cannot cope: because the array changes, or because the operation has no inverse. You can subtract a sum back out; you cannot subtract a minimum back out. Min, max and gcd all need a tree.",
+      "Range updates need one more idea, called lazy propagation. Rather than pushing a change down to every leaf, record it on the highest node that is fully covered and leave a note there. Push the note one level down only when a later query needs to look inside. That keeps range updates at log n too.",
+    ],
     mentalModel: {
       lines: [
         "Each node holds the answer for one slice of the array.",
@@ -1567,6 +1654,14 @@ func (s *Lazy) Add(node, lo, hi, l, r, v int) {
       "the values are huge, so compress them into ranks first",
     ],
     typicalQuestion: "Support point updates and prefix sum queries on an array.",
+    teach: [
+      "A segment tree is powerful but long to write. If all you need is running totals with updates, there is something much shorter.",
+      "The Fenwick tree hides the structure in the bits of the index. Position i is responsible for a block of values ending at i, and the size of that block is i & -i — the lowest set bit of i.",
+      "To read the total up to i, add tree[i], then strip the lowest set bit and repeat. Each strip removes a bit, so you finish in at most log n steps and the blocks you touched tile the prefix exactly.",
+      "To update position i, go the other way: add the lowest set bit and repeat, fixing every block that contains i. Also log n steps.",
+      "That is the whole structure — about twenty lines, one array, no nodes.",
+      "Two rules. It must be 1-indexed, because 0 & -0 is 0 and the update loop would never move. And it only works for operations you can subtract back out, so sums yes, minimums no. When the values are large, compress them to ranks first, which is exactly the setup for counting inversions.",
+    ],
     mentalModel: {
       lines: [
         "Node i covers a block of size (i & -i) ending at i.",
@@ -1682,6 +1777,14 @@ func (b *BIT) Range(l, r int) int {
       "you already know LCA but need aggregation along the path",
     ],
     typicalQuestion: "Sum the values on the path between u and v, with updates in between.",
+    teach: [
+      "Subtree questions are easy: number the nodes in DFS order and a subtree becomes one contiguous run, which any range structure can handle.",
+      "Path questions are not. The path from u to v zigzags up and down the tree, touching nodes that are nowhere near each other in any numbering.",
+      "So choose the numbering carefully. At each node, look at its children and pick the one with the biggest subtree — call that edge heavy, and all the others light. Follow the heavy edges and they link into long chains. Lay each chain out contiguously.",
+      "Here is why that helps. Going down a light edge means entering a subtree at most half the size of where you were. You can only halve a tree about log n times, so any root-to-node path crosses at most log n light edges. Between them, the path stays inside a single chain.",
+      "So a path breaks into about log n contiguous pieces, and each piece is one range query on a segment tree. Climb from the deeper of the two chain heads, query that piece, jump to the parent above it, repeat.",
+      "The cost is log squared per query: log chains times log per query. This is heavy machinery — only reach for it when path updates and path queries genuinely both appear.",
+    ],
     mentalModel: {
       lines: [
         "From each node, the child with the biggest subtree is the 'heavy' one.",

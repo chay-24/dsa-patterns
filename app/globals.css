@@ -88,6 +88,38 @@
   }
 }
 
+@layer components {
+  .logo-eye {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /*
+   * In the original artwork the gopher is glancing to one side. These offsets
+   * carry each pupil to the centre of its own eye, measured from the vector:
+   * see tools/build-gopher.py.
+   */
+  .logo-pupil {
+    transition: transform 240ms var(--ease-out-subtle);
+  }
+
+  .logo-brand:hover .logo-pupil-l,
+  .logo-brand:focus-visible .logo-pupil-l {
+    transform: translate(24.53px, -2.46px);
+  }
+
+  .logo-brand:hover .logo-pupil-r,
+  .logo-brand:focus-visible .logo-pupil-r {
+    transform: translate(24.79px, -3.76px);
+  }
+
+  /* the delay lets the eyes settle forward before the first blink */
+  .logo-brand:hover .logo-eye,
+  .logo-brand:focus-visible .logo-eye {
+    animation: logo-blink 1.9s var(--ease-out-subtle) 300ms infinite;
+  }
+}
+
 @layer utilities {
   /* uppercase micro-label used for section eyebrows */
   .label {
@@ -148,6 +180,22 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* hover the brand: the gopher looks straight at you, then keeps blinking */
+@keyframes logo-blink {
+  0%,
+  10% {
+    transform: scaleY(1);
+  }
+  15%,
+  19% {
+    transform: scaleY(0.08);
+  }
+  24%,
+  100% {
+    transform: scaleY(1);
   }
 }
 

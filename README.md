@@ -24,7 +24,7 @@ npm run lint
 | ------------------- | ------------------------------------------------------- |
 | `/`                 | Hero, category grid, entry point to the decision tree    |
 | `/patterns`         | All 97 patterns, grouped by category                     |
-| `/patterns/[slug]`  | The main page: mental model → recognition → template → complexity → variations → mistakes → practice → related |
+| `/patterns/[slug]`  | The main page: how it works → recognition → template → complexity → variations → mistakes → practice → related |
 | `/categories/[slug]`| One category: its patterns and every problem in it       |
 | `/problems`         | Filterable list of all problems                          |
 | `/problems/[id]`    | Why this pattern, the key observation, the template      |
@@ -53,9 +53,36 @@ tools/          patch-patterns.py — bulk content edits across data/patterns
 Content is separated from UI on purpose: adding a pattern or a hundred problems
 means editing `data/`, never a component.
 
+## How a pattern page is written
+
+Every pattern opens with **How it works** — a short lesson, not a summary. It
+follows the same arc each time:
+
+1. the problem, and the obvious thing a student would try
+2. why that falls over
+3. the one observation that fixes it
+4. how the observation becomes a method
+5. why it is correct, or what it costs
+
+Then a diagram, then an **In short** box — the same idea compressed to four
+bullets and one line, for when you are revising rather than learning.
+
+That lesson lives in `teach: string[]` on each pattern; the bullets live in
+`mentalModel.lines`. The field is required, so the build will not pass if a
+pattern is missing its explanation.
+
+House style for it: short sentences, second person, concrete numbers, and no
+jargon where a common word works — "on average" rather than "amortised",
+"flips once" rather than "monotone".
+
 ## Design notes
 
-- **Fonts** — Space Grotesk for text, IBM Plex Mono for code, labels and numbers.
+- **Fonts** — Space Grotesk for text, IBM Plex Mono for code, labels and
+  numbers. The dividing line: mono for numbers, code and UPPERCASE labels; sans
+  for anything written as a sentence, however small.
+- **Brand mark** — the official Go gopher. Hovering it makes it blink, on a
+  loop, in CSS alone. It stands on its own in the sidebar with no wordmark.
+  See the credit below.
 - **Colour** — near-black surfaces, hairline borders, and lime used sparingly:
   the active nav item, a hovered card's number, one key line per pattern.
 - **Syntax highlighting** — `lib/highlight.ts` is a small Go tokenizer that runs
@@ -79,3 +106,18 @@ node tools/verify-leetcode.mjs
 
 `tools/validate-data.mjs` separately checks that every pattern's `related[]`,
 every `problems[]` id, and every category reference resolves.
+
+## Credit
+
+The Go gopher was designed by [Renée French](http://reneefrench.blogspot.com/).
+The vector artwork is by [Takuya Ueda](https://github.com/golang-samples/gopher-vector),
+used under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
+
+Changes made: each eye is wrapped in a group so it can be animated, and the
+viewBox is cropped to the head for use at icon size. The artwork itself is
+untouched. Regenerate the component with:
+
+```bash
+curl -sL https://raw.githubusercontent.com/golang-samples/gopher-vector/master/gopher.svg -o gopher.svg
+python3 tools/build-gopher.py gopher.svg
+```

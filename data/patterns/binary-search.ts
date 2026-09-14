@@ -16,6 +16,13 @@ export const binarySearch: Pattern[] = [
       "the matrix is row-major sorted — treat it as one flat sorted array",
     ],
     typicalQuestion: "Return the index of target in a sorted array, or -1.",
+    teach: [
+      "You are looking for a number in a sorted array. Checking every element works, but it ignores the order completely.",
+      "Look at the middle element instead. If it is your target, you are done. If it is too small, then it and everything to its left are too small — half the array is gone in one comparison. If it is too big, the right half goes.",
+      "Repeat on what is left. Each step halves the range, so an array of a million takes about twenty steps.",
+      "The reason people find this fiddly is bookkeeping, not the idea. So fix one convention and never change it. Use lo and hi as a half-open range [lo, hi): lo is the first candidate, hi is one past the last. The loop runs while lo < hi. Going right sets lo = mid + 1; going left sets hi = mid.",
+      "Two rules keep it safe. The range must strictly shrink every iteration, or you will spin forever. And compute mid as lo + (hi-lo)/2 — it is a harmless habit in Go, and the right one everywhere else.",
+    ],
     mentalModel: {
       lines: [
         "Keep one promise: the answer is inside [lo, hi).",
@@ -129,6 +136,13 @@ i, found := slices.BinarySearch(nums, target)`,
       "you are maintaining a tails array for longest increasing subsequence",
     ],
     typicalQuestion: "Find the first and last position of a target in a sorted array.",
+    teach: [
+      "Plain binary search answers 'is it here?'. Most real questions are about boundaries instead: where does it first appear, where would I insert it, how many are smaller than it.",
+      "Stop comparing for equality and start asking a yes/no question of each position: is a[i] at least the target? Down the sorted array the answers read false, false, false, true, true, true. They flip exactly once.",
+      "Lower bound is that flip point. Binary search it the same way — the only change is that when the test is true you keep mid as a candidate rather than discarding it.",
+      "It never fails. If nothing is big enough, it returns the length of the array, meaning 'it would go on the end'. That is a feature: it hands you an insertion point, and you check the element yourself if you care whether it actually matched.",
+      "It also counts for free. The lower bound of x is exactly how many values are smaller than x, because everything before the flip is smaller. That fact is doing the work inside the n log n version of longest increasing subsequence.",
+    ],
     mentalModel: {
       lines: [
         "Ask a yes/no question: is a[i] >= target?",
@@ -226,6 +240,12 @@ i, found := slices.BinarySearch(nums, target)`,
       "you need the size of an equal-value block: upperBound - lowerBound",
     ],
     typicalQuestion: "How many values in this sorted array are at most x?",
+    teach: [
+      "Upper bound is the same search with one character changed. Lower bound asks 'is a[i] at least x?'. Upper bound asks 'is a[i] strictly greater than x?'.",
+      "That shifts the flip point to just past the last copy of x, instead of to the first one.",
+      "With both in hand, three counts fall out with no extra work. lowerBound(x) is how many values are below x. upperBound(x) is how many are x or below. Subtract one from the other and you have how many copies of x there are.",
+      "So 'find the first and last position of a target' is two calls and a subtraction — no scanning outwards from a match, and no special case when the target is missing.",
+    ],
     mentalModel: {
       lines: [
         "Same search, different question: is a[i] > target?",
@@ -300,6 +320,13 @@ countInRange  := upperBound(a, hi) - lowerBound(a, lo) // [lo, hi] inclusive`,
       "the wording is 'minimise the largest' or 'maximise the smallest'",
     ],
     typicalQuestion: "What is the smallest eating speed that finishes all the bananas in h hours?",
+    teach: [
+      "Here is a problem that looks nothing like a search. Koko eats bananas from piles at some speed, and you want the slowest speed that still finishes in h hours. The piles are not sorted, so there is nothing in the array to binary search.",
+      "Change what you are searching. The answer is a speed somewhere between 1 and the biggest pile. That is your array.",
+      "Now write one small function: at speed k, does she finish in time? It is a simple sweep — add up the hours, compare to h. Nothing clever.",
+      "The key observation is that this check flips only once. If speed 7 finishes in time, then 8 certainly does, and so does 9. So as k grows, the answers read no, no, no, yes, yes, yes — exactly the sorted-booleans shape binary search needs. Find the flip, and that first yes is your answer.",
+      "Once you see it, the phrasings jump out: 'minimise the largest', 'maximise the smallest', 'the least capacity such that'. The binary search is the easy half. Designing the check, and convincing yourself it flips only once, is the real problem.",
+    ],
     mentalModel: {
       lines: [
         "Stop searching the data. Search the answer.",
@@ -444,6 +471,13 @@ countInRange  := upperBound(a, hi) - lowerBound(a, lo) // [lo, hi] inclusive`,
       "O(log n) is required, so a linear scan for the pivot is not allowed",
     ],
     typicalQuestion: "Search for a target in a rotated sorted array in O(log n).",
+    teach: [
+      "Someone took a sorted array, cut it at an unknown point, and swapped the two pieces. Now [4,5,6,7,0,1,2]. You still need a target in log n time, but the usual comparison lies to you: the middle element tells you nothing about which side the target is on.",
+      "Look at what the cut can and cannot do. It makes exactly one drop in the array. So if you split anywhere, that single drop can only land in one of the two halves — which means the other half is a clean, ordinary sorted run.",
+      "So first work out which half is the sorted one, by comparing the middle with an end rather than with your target. If a[lo] is at most a[mid], the left half is clean.",
+      "Now you can reason about that clean half properly: is the target inside its range? If it is, search there. If not, it must be in the messy half, so go there and repeat.",
+      "Duplicates spoil it. With [2,2,2,1,2] the comparison against the end tells you nothing at all, and the only safe move is to step one end inward — which in the worst case makes it linear. Say so out loud if it comes up.",
+    ],
     mentalModel: {
       lines: [
         "Cut at the middle. One half is always still sorted.",
@@ -558,6 +592,13 @@ countInRange  := upperBound(a, hi) - lowerBound(a, lo) // [lo, hi] inclusive`,
       "you can start at a corner where one direction always increases and the other decreases",
     ],
     typicalQuestion: "Search a matrix where every row and every column is sorted ascending.",
+    teach: [
+      "A matrix where every row is sorted left to right and every column sorted top to bottom. It is tempting to flatten it into one long sorted array, but that is wrong: the end of one row is not necessarily smaller than the start of the next.",
+      "Stand at the top-right corner instead, and notice what that spot gives you. Moving left always gets smaller. Moving down always gets bigger. Two directions that disagree — that is a decision you can act on.",
+      "If the value is too big, nothing below it in this column can help either, since down only grows. Drop the whole column. If the value is too small, nothing to its left in this row can help, since left only shrinks. Drop the whole row.",
+      "Every step deletes an entire row or column, so you finish in m + n steps rather than m times n. The bottom-left corner works the same way, mirrored.",
+      "The same corner thinking handles an array of unknown length. You cannot pick a middle without knowing the end, so find one: probe 1, 2, 4, 8, doubling until you overshoot, then binary search the last interval.",
+    ],
     mentalModel: {
       lines: [
         "Start at the top-right corner.",
@@ -656,6 +697,12 @@ countInRange  := upperBound(a, hi) - lowerBound(a, lo) // [lo, hi] inclusive`,
       "the slope only changes direction once, even if you cannot write the formula",
     ],
     typicalQuestion: "Minimise a convex cost function over a range of integers.",
+    teach: [
+      "Binary search needs a yes/no test that flips once. Some problems do not have one. Instead the values rise to a peak and then fall — think of a cost that improves for a while and then gets worse.",
+      "There is no single flip to find, but there is still something to throw away. Pick two points inside the range, m1 before m2, and compare them. If f(m1) is less than f(m2), the peak cannot be to the left of m1, because on the way up the values only increase. So drop everything up to m1.",
+      "Each round removes about a third of the range, so it still finishes in log time — just with two evaluations per round instead of one.",
+      "For whole numbers there is a neater way. Compare f(mid) with f(mid+1): that is the slope. The slope is positive while climbing and negative after the peak, which flips exactly once — so binary search the slope instead. One evaluation per round, exact answers, and code you already know how to write.",
+    ],
     mentalModel: {
       lines: [
         "Use it when the curve goes up then down, just once.",
@@ -764,6 +811,13 @@ func peakIndex(f func(int) int, lo, hi int) int {
       "checking a candidate is much cheaper than optimising",
     ],
     typicalQuestion: "Minimise the largest sum among k contiguous parts.",
+    teach: [
+      "This is the general idea behind binary search on the answer, and worth naming because it applies beyond arrays.",
+      "Finding the best possible value is usually hard. Checking whether a given value is good enough is usually easy. Those two sound different but they are the same problem in disguise, up to a log factor.",
+      "So flip the question. Instead of 'what is the smallest maximum effort on any path?', ask 'can I get across if I never take a step bigger than X?'. That second question is answered by an ordinary reachability search — no optimisation, no cleverness.",
+      "If a bigger X is never harder than a smaller one — and here it obviously is not, since a larger allowance permits every path a smaller one did — then the yes/no answers flip exactly once as X grows. Binary search X, and the flip point is the exact optimum.",
+      "The phrase to listen for is a min of a max, or a max of a min. 'Minimise the largest part', 'maximise the smallest gap'. Whenever you hear that shape, look for the check.",
+    ],
     mentalModel: {
       lines: [
         "Finding the best answer is hard. Checking one answer is easy.",
@@ -868,6 +922,12 @@ func parametric(lo, hi int, decide func(int) bool) int {
       "an out-of-range read is expensive or returns a sentinel",
     ],
     typicalQuestion: "Search a sorted array of unknown length.",
+    teach: [
+      "Sometimes you cannot pick a middle, because you do not know where the end is. The array is unbounded, or the length is hidden behind an API, or the answer range is enormous but the answer is probably small.",
+      "So find an end first. Look at index 1, then 2, then 4, then 8, doubling each time, until the value you find overshoots the target.",
+      "At that moment you know two things: the answer is not past the current probe, and it is not before the previous one. That is a range of at most half the current bound, and now an ordinary binary search finishes the job.",
+      "Both halves cost about log p steps, where p is where the answer actually lives — not where the array ends. So when the answer is near the front, you barely touch the data at all. The same doubling is what lets a merge skip a long run from one side quickly.",
+    ],
     mentalModel: {
       lines: [
         "Probe 1, 2, 4, 8, 16 until you overshoot the target.",
@@ -960,6 +1020,13 @@ func gallop(a []int, start, target int) int {
       "the values are not sorted, but the slope only flips once, which is enough",
     ],
     typicalQuestion: "Find a peak element in O(log n).",
+    teach: [
+      "A mountain array climbs to a peak and then drops. Find the peak in log n time. There is no sorted order to search and no target to compare against.",
+      "So compare a position with its neighbour instead. If a[mid] is less than a[mid+1] you are on the way up. If it is greater, you are on the way down or standing on the peak.",
+      "On the way up, a peak has to exist somewhere to the right — the values are still rising and the array has to end sometime. So throw away everything up to and including mid. On the way down, the peak is at mid or to its left.",
+      "You are binary searching the slope rather than the values, and the slope flips exactly once, which is all binary search ever needed.",
+      "Once you have the peak, searching the whole mountain for a value is three binary searches: find the peak, search the rising side normally, then search the falling side with every comparison reversed.",
+    ],
     mentalModel: {
       lines: [
         "Compare a[mid] with a[mid+1]. That tells you which way the slope runs.",

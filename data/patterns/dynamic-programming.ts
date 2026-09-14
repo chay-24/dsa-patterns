@@ -16,6 +16,14 @@ export const dynamicProgramming: Pattern[] = [
       "you can describe the state in one sentence with one index",
     ],
     typicalQuestion: "Rob houses without robbing two adjacent ones — what is the maximum?",
+    teach: [
+      "Rob a row of houses without robbing two next to each other. Grabbing the biggest house first can easily block two larger ones beside it, so greedy fails. And trying every combination is exponential.",
+      "Dynamic programming sits between those. The idea is to solve the problem for shorter and shorter prefixes, and reuse those answers.",
+      "Start by writing down, in one sentence, what dp[i] means. Here: the best you can get from the first i houses. That sentence is the most important line you will write, and nearly every DP bug is a vague version of it.",
+      "Then ask how dp[i] follows from what came before. At house i you either rob it — which means you could not have robbed i-1, so you add its value to dp[i-2] — or you skip it and keep dp[i-1]. Take the better.",
+      "Set the first couple of values by hand, sweep left to right, and you are done in one pass.",
+      "One last simplification. If dp[i] only ever looks back a fixed distance, you do not need the array at all — two variables will do. Swapping them each step is where the classic bug lives, so assign both at once.",
+    ],
     mentalModel: {
       lines: [
         "Say in one sentence what dp[i] means. Write it down before any code.",
@@ -151,6 +159,14 @@ func rob(nums []int) int {
       "obstacles or costs vary per cell",
     ],
     typicalQuestion: "How many unique paths are there from the top-left to the bottom-right?",
+    teach: [
+      "Count the paths from the top-left of a grid to the bottom-right, moving only right or down.",
+      "Because movement is restricted, every cell depends only on cells above and to the left. Nothing ever points backwards. That is what makes a simple sweep work.",
+      "So define dp[r][c] as the answer for reaching that cell, and fill the grid in an order where the cells you need are already done — top to bottom, left to right. To reach a cell you arrived from above or from the left, so add those two.",
+      "If movement were unrestricted the dependencies would form loops, and no filling order would exist. That is your signal that it is a search problem, not a DP one.",
+      "Now the space trick. A row only ever needs the row above it, so keep one array. As you sweep left to right, dp[c] still holds the value from the row above until you overwrite it, and dp[c-1] has already been updated for this row — which is exactly the two neighbours you wanted.",
+      "Obstacles need one extra thought: a blocked cell is set to zero rather than summed, so nothing flows through it.",
+    ],
     mentalModel: {
       lines: [
         "dp[r][c] is the answer for the path ending at that cell.",
@@ -284,6 +300,14 @@ func rob(nums []int) int {
       "a pattern contains wildcards",
     ],
     typicalQuestion: "What is the minimum number of edits to turn word1 into word2?",
+    teach: [
+      "Turn one word into another using inserts, deletes and replacements, in the fewest steps. Two strings, and both can be consumed at different rates.",
+      "So the state is a pair. Let dp[i][j] be the answer for the first i letters of one word and the first j of the other. Every cell is a smaller version of the same question.",
+      "Look at the last letter of each. If they match, they cost nothing — cross both off and the problem shrinks diagonally to dp[i-1][j-1].",
+      "If they do not match, you have three moves, and each one lands on a neighbouring cell. Replace crosses off both, so dp[i-1][j-1]. Delete crosses off one, so dp[i-1][j]. Insert crosses off the other, so dp[i][j-1]. Take the cheapest and add one.",
+      "The base row and column are where people slip. Turning something into an empty string means deleting every letter, so dp[i][0] is i and dp[0][j] is j.",
+      "Watch the indices too: dp index i means 'the first i letters', so the letter itself is at position i-1. Nearly every off-by-one here comes from mixing those two. And since each row only needs the row above, two arrays are enough.",
+    ],
     mentalModel: {
       lines: [
         "dp[i][j] is about the first i letters of one string and the first j of the other.",
@@ -442,6 +466,14 @@ func rob(nums []int) int {
       "constraints like cooldown or a transaction limit add states, not dimensions",
     ],
     typicalQuestion: "Maximise profit with at most k stock transactions.",
+    teach: [
+      "Buying and selling stock, but with a rule attached: at most k trades, or a day off after every sale, or a fee. Each new rule seems to demand a new algorithm.",
+      "It does not. On any given day you are in one of a few situations. You are holding a share, or you are not. That is a state.",
+      "Write down the best money you could have in each state. Holding starts negative, because buying costs you. Not holding starts at zero.",
+      "Then draw the arrows between states and write one line per arrow. You can buy, which moves you from not-holding to holding and costs today's price. You can sell, which moves you back and earns it. Each line is just 'the best I could be in this state today'.",
+      "Now every new rule is a new state or a blocked arrow, not a new algorithm. A cooldown means selling lands you in a third state that can only rest. A transaction limit means a pair of states per trade. A fee is subtracted on one side.",
+      "The one trap is updating in place. Each state must be computed from yesterday's values, so either take a copy first or order the updates so nothing reads a number that has already moved on.",
+    ],
     mentalModel: {
       lines: [
         "Name the situations you can be in. Holding a share, or not.",
@@ -563,6 +595,14 @@ func rob(nums []int) int {
       "n is small — typically at most a few hundred, because it is O(n³)",
     ],
     typicalQuestion: "Maximise the coins from bursting all balloons, given neighbours change as you go.",
+    teach: [
+      "Balloons in a row. Bursting one earns you its value times its two current neighbours, and then its neighbours become adjacent. Burst them all for the most money.",
+      "The trouble is that bursting changes the board. Split the row in two and the halves are not independent any more, because bursting on one side changes who is next to whom on the other.",
+      "Here is the fix, and it is the whole pattern. Do not think about which balloon you burst first. Think about which one you burst last.",
+      "If balloon k is the last one to go in the stretch from i to j, then when its turn comes everything between i and j is already gone — so its neighbours are exactly i-1 and j+1, fixed and known. And everything to its left was handled without ever touching anything on its right. The halves are independent again.",
+      "So let dp[i][j] be the best for that stretch, try every k inside it as the last one, and take the best. Fill by increasing length, so the shorter stretches are ready when you need them.",
+      "That is n squared stretches with n choices each, so n cubed — which is why these problems always come with small inputs. And pad the ends with imaginary 1s so the neighbour lookup never falls off the edge.",
+    ],
     mentalModel: {
       lines: [
         "dp[i][j] is the answer for the stretch from i to j.",
@@ -697,6 +737,14 @@ func rob(nums []int) int {
       "the answer is a count over a range; compute f(hi) - f(lo-1)",
     ],
     typicalQuestion: "How many integers up to N have no two consecutive ones in binary?",
+    teach: [
+      "Count the numbers up to 10 to the 18th with some property of their digits. You cannot loop over them. But there are only eighteen digits, and ten choices each.",
+      "So build the number one digit at a time, from the left, and count how many ways you can finish.",
+      "The one thing you must track is whether you are still hugging the limit. If every digit so far matches the limit exactly, this digit is capped — for 347 you may only pick 0 to 3 at the front. Call that being tight.",
+      "The moment you pick something smaller than the cap, you drop below the limit and everything after it is free: all ten digits at every remaining position, no matter what the limit says.",
+      "And that is the part worth caching. Free positions do not depend on the limit at all, so the count from 'position 5, previous digit 7, no longer tight' is the same every time you reach it. The tight path, by contrast, is walked only once per position — and must never be cached, since it depends on the limit's own digits.",
+      "Counting inside a range is then two calls and a subtraction: everything up to hi, minus everything up to lo-1.",
+    ],
     mentalModel: {
       lines: [
         "Build the number one digit at a time, from the left.",
@@ -849,6 +897,14 @@ func findIntegers(n int) int {
       "brute-force permutations (n!) are too slow but 2^n · n is fine",
     ],
     typicalQuestion: "What is the shortest path that visits every node?",
+    teach: [
+      "When a problem says n is at most 20, that is not a detail — it is the method. Twenty items means about a million subsets, which is nothing.",
+      "A subset fits in a single integer. Bit i being on means item i is used. So a whole set becomes a number you can use as an array index.",
+      "Now you can do DP over sets. dp[mask] is the best way to reach the situation where exactly those items are done. Assigning people to jobs, visiting every city, covering every skill — all the same shape.",
+      "Go through the masks in increasing numerical order and you get the right order for free: adding an item always makes the number larger, so every smaller mask is already final before you use it.",
+      "There is a free dimension hiding here too. The number of set bits tells you how far along you are — if you assign people in order, popcount(mask) is the person whose turn it is, and you never need a second index.",
+      "Two habits worth keeping. Do not confuse the bit index i with the bit value 1<<i. And check the arithmetic: 2^20 is fine, 2^30 is a billion and you need a different idea.",
+    ],
     mentalModel: {
       lines: [
         "With n at most 20, a set of items fits in one integer.",
@@ -1011,6 +1067,14 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       "the capacity is small enough to index an array",
     ],
     typicalQuestion: "Maximise value within a weight capacity, using each item at most once.",
+    teach: [
+      "Items with weights and values, a bag with a capacity, and each item may be taken once. Maximise the value inside.",
+      "Greedy by value-per-weight looks right and is wrong: it can fill the bag with two decent items when one perfect item was available.",
+      "So do DP over capacity. Let dp[c] be the best value you can fit into capacity c using the items considered so far. For a new item you either skip it, leaving dp[c] alone, or take it, giving dp[c-w] plus its value.",
+      "Here is the part that matters. Walk the capacities DOWNWARDS. Going down means dp[c-w] has not been touched yet on this pass, so it still describes the world before this item existed — which is what 'take it once' requires.",
+      "Walk upwards instead and dp[c-w] may already include the item, so it gets taken again and again. That is not a bug so much as a different problem, and it is exactly the unbounded version. One loop direction separates the two.",
+      "Finally, be honest about the cost. O(n times W) sounds polynomial but W is a value, not a size. A capacity of a billion makes this useless, and that is worth saying out loud.",
+    ],
     mentalModel: {
       lines: [
         "dp[c] is the best you can do with capacity c.",
@@ -1143,6 +1207,14 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       "the classic: coins of given denominations making a target amount",
     ],
     typicalQuestion: "What is the fewest coins needed to make this amount?",
+    teach: [
+      "Coins of given denominations, unlimited supply, make an amount with the fewest coins. Greedy works for real currencies and fails for sets like 1, 3 and 4, where making 6 greedily takes three coins and the answer is two.",
+      "So DP again, and almost the same code as 0/1 knapsack. The only change: walk the amounts UPWARDS.",
+      "Going up means dp[a-c] may already have used this coin, so using it again is allowed — which is precisely what unlimited supply means.",
+      "Now the subtler half, which is about counting rather than minimising. Loop order changes the answer, and this catches people out.",
+      "Put the coins on the outside and you count combinations. Each combination is only ever built in one fixed coin order, so 1+2 and 2+1 collapse into the same thing.",
+      "Put the amount on the outside and at every amount you try every coin, so 1+2 and 2+1 are counted separately — that is permutations. The two loops look interchangeable and are not. Decide which the question wants before you write them.",
+    ],
     mentalModel: {
       lines: [
         "Walk the capacities UPWARDS so an item can be picked again.",
@@ -1252,6 +1324,13 @@ for sub := mask; sub > 0; sub = (sub - 1) & mask {
       "counts are large enough that the naive triple loop times out",
     ],
     typicalQuestion: "Maximise value with at most k copies of each item.",
+    teach: [
+      "Between 'once' and 'unlimited' sits the awkward case: you have exactly seven of this item. The obvious fix is another loop trying zero through seven copies, which multiplies the work by the count.",
+      "Instead, repackage the item. Bundle the copies as 1, then 2, then 4, and so on, with whatever is left over as a final bundle. Seven copies become bundles of 1, 2 and 4.",
+      "Now here is why that works: any number from 0 to 7 is a sum of some of those bundles, and each bundle is used at most once. So you can reach every possible count, and the bundles are ordinary 0/1 items you already know how to handle.",
+      "Seven copies turned into three items. A thousand copies turn into ten. The extra loop is gone, replaced by a log factor.",
+      "And check the bound before doing any of this. If the count is so high you could never afford that many anyway, the limit does not bite and you should just use the unbounded version.",
+    ],
     mentalModel: {
       lines: [
         "Each item comes with a limited number of copies.",
@@ -1369,6 +1448,14 @@ func canReach(values, counts []int, target int) bool {
       "assigning + and - to each number to reach a target",
     ],
     typicalQuestion: "Can this array be split into two subsets with equal sums?",
+    teach: [
+      "Can this array be split into two halves with the same total? First simplify: if the whole total is odd, the answer is immediately no. Otherwise you need a subset adding up to exactly half.",
+      "So the real question is which totals are reachable at all. Let dp[s] be true if some subset adds up to s.",
+      "Each number is either in or out. So if s-v was already reachable before this number, then s is reachable now with it. Start with zero reachable — the empty subset — and let each number extend the set of totals you can hit.",
+      "It is 0/1 knapsack with booleans instead of values, so the same rule applies: walk the totals downwards, or a number gets used more than once.",
+      "The trick worth remembering is the disguise. 'Put a + or - in front of each number to reach a target' looks different, but the positives and negatives split the array in two. If P is the positive group, then P minus N is the target and P plus N is the total, so P is (total + target) / 2. Now it is subset sum again.",
+      "If you only need a yes or no and the totals are large, a shifted big integer tests 64 totals at once and is dramatically faster than a loop.",
+    ],
     mentalModel: {
       lines: [
         "dp[s] answers one question: can I make the total s?",

@@ -41,7 +41,7 @@ export async function generateMetadata({
 }
 
 const SECTIONS = [
-  { id: "mental-model", number: "01", title: "Mental Model" },
+  { id: "how-it-works", number: "01", title: "How it works" },
   { id: "recognition", number: "02", title: "Recognition" },
   { id: "template", number: "03", title: "Go Template" },
   { id: "complexity", number: "04", title: "Complexity" },
@@ -135,25 +135,46 @@ export default async function PatternPage({
           </header>
 
           <div className="mt-14 space-y-14">
-            {/* ── 01 mental model ──────────────────────────────────── */}
-            <Section id="mental-model" number="01" title="Mental Model">
-              <div className="space-y-1.5">
-                {pattern.mentalModel.lines.map((l) => (
-                  <p key={l} className="text-[14px] leading-relaxed text-fg-secondary">
-                    {l}
+            {/* ── 01 the lesson ────────────────────────────────────── */}
+            <Section id="how-it-works" number="01" title="How it works">
+              <div className="max-w-[68ch] space-y-4">
+                {pattern.teach.map((para, i) => (
+                  <p
+                    key={i}
+                    className="text-[14.5px] leading-[1.75] text-fg-secondary"
+                  >
+                    {para}
                   </p>
                 ))}
               </div>
 
               {pattern.mentalModel.diagram ? (
-                <Diagram className="mt-6">{pattern.mentalModel.diagram}</Diagram>
+                <Diagram className="mt-7">{pattern.mentalModel.diagram}</Diagram>
               ) : null}
 
-              {pattern.mentalModel.key ? (
-                <p className="mt-6 border-l border-accent/40 pl-4 text-[13.5px] leading-relaxed text-fg">
-                  {pattern.mentalModel.key}
+              <div className="mt-7 rounded-lg border border-border bg-surface/40 p-5">
+                <p className="font-mono text-2xs uppercase tracking-[0.14em] text-fg-faint">
+                  In short
                 </p>
-              ) : null}
+                <ul className="mt-3.5 space-y-1.5">
+                  {pattern.mentalModel.lines.map((l) => (
+                    <li
+                      key={l}
+                      className="flex gap-2.5 text-[13.5px] leading-relaxed text-fg-secondary"
+                    >
+                      <span aria-hidden className="text-fg-faint">
+                        &middot;
+                      </span>
+                      <span>{l}</span>
+                    </li>
+                  ))}
+                </ul>
+                {pattern.mentalModel.key ? (
+                  <p className="mt-4 border-l border-accent/40 pl-3.5 text-[13.5px] leading-relaxed text-fg">
+                    {pattern.mentalModel.key}
+                  </p>
+                ) : null}
+              </div>
             </Section>
 
             {/* ── 02 recognition ───────────────────────────────────── */}

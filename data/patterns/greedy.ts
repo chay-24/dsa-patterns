@@ -15,6 +15,14 @@ export const greedy: Pattern[] = [
       "the answer does not depend on the input order, so sorting is free",
     ],
     typicalQuestion: "Arrange the numbers to form the largest possible concatenated value.",
+    teach: [
+      "Greedy means committing to the best-looking choice now and never reconsidering. It is the fastest thing to write and the easiest thing to get wrong.",
+      "Almost always it comes in two parts: sort, then one pass. And the sort key is the algorithm. Once the data is in the right order the pass is usually three lines, so all the thinking goes into the ordering.",
+      "Take 'arrange these numbers to form the largest value'. Sorting by size is wrong: 9 should come before 34 even though it is smaller. What you actually want is to put a before b when a+b reads larger than b+a. That comparator is the entire solution.",
+      "Before you trust any greedy rule, do this. Imagine the best possible answer. Show that you can rewrite it to start with your choice without making it worse. If you can, your choice was safe, and the same argument applies to what is left.",
+      "If you cannot find that argument in a couple of minutes, stop and write the DP. Greedy failing is quiet — it passes the small examples and breaks on the case you did not think of.",
+      "And when the rules push both ways, do not try to satisfy them in one pass. Sweep left to right handling one direction, then right to left handling the other, taking the larger requirement at each position.",
+    ],
     mentalModel: {
       lines: [
         "Greedy is sort, then one pass.",
@@ -155,6 +163,14 @@ export const greedy: Pattern[] = [
       "a decision may need revisiting — push the regret back into the heap",
     ],
     typicalQuestion: "Maximise capital by choosing up to k projects, each unlocked by your current capital.",
+    teach: [
+      "Some greedy problems have a moving target. What you are allowed to choose changes as you go, so a single sort is not enough.",
+      "Take picking projects: each needs some capital to start, and completing one increases your capital. Which projects are even available depends on choices you already made.",
+      "Handle the two dimensions separately. Sort by the thing that decides availability — capital here. Then sweep, and as each project becomes affordable, push it into a heap ordered by profit. Take the heap's best. Repeat.",
+      "The sort answers 'what am I allowed to pick'. The heap answers 'which of those is best'. Neither alone would do.",
+      "There is a second flavour worth knowing, where you deliberately over-commit and fix it later. You have a few ladders and a pile of bricks. Use a ladder for every climb, but keep the climbs you used them on in a heap. The moment you run out of ladders, pull the smallest climb back out and pay for it with bricks instead. You get the same result as planning perfectly, without having to see the future.",
+      "Whenever a greedy choice might need taking back, look for that shape: commit, then let the heap hand you the cheapest thing to undo.",
+    ],
     mentalModel: {
       lines: [
         "Sort by whatever decides when an option becomes available.",
@@ -303,6 +319,14 @@ export const greedy: Pattern[] = [
       "you need the maximum number of simultaneous intervals",
     ],
     typicalQuestion: "What is the minimum number of intervals to remove so none overlap?",
+    teach: [
+      "Meetings with start and end times. Fit as many as possible without overlaps.",
+      "Sorting by start is the obvious move and it is wrong: one long meeting starting at 9am blocks the whole day. Sorting by length is also wrong — a short meeting in the middle can split the day and cost you two.",
+      "Sort by end time. Always take the meeting that finishes earliest, then skip everything clashing with it, then repeat.",
+      "Why is that safe? Whatever the best possible schedule is, its first meeting finishes no earlier than yours. So swap yours in for it. Nothing else has to move, because yours frees up the room at least as soon. The schedule is still valid and just as large — so there is always a best answer that starts with your choice.",
+      "Merging overlapping intervals is a different job and wants a different sort: by start. Walk through, and either stretch the interval you are holding or push it and start a new one. When stretching, take the larger of the two ends, or a short interval swallowed inside a long one will shrink it.",
+      "So: by end when you are counting how many fit, by start when you are merging. Mixing those two is the classic mistake.",
+    ],
     mentalModel: {
       lines: [
         "To fit as many as possible, sort by END time.",
@@ -442,6 +466,14 @@ export const greedy: Pattern[] = [
       "you need to prove the greedy choice rather than just guess it",
     ],
     typicalQuestion: "Select the maximum number of activities that do not overlap.",
+    teach: [
+      "This is the same earliest-finish rule as interval scheduling, given its own page because the proof is the template for every greedy argument you will ever need.",
+      "Greedy is correct when two things are true, and it is worth being able to say both out loud.",
+      "The first is that your choice is safe. There is some best answer that includes it. You show this by exchange: take any best answer, and swap your choice in for whatever it did first. Here that works because your meeting finishes earliest, so it cannot block anything the other one allowed.",
+      "The second is that the rest of the problem is the same problem. After committing, you are left with 'fit as many as possible into the remaining time', which is what you started with, just smaller. That is what lets you repeat the argument all the way down.",
+      "When only one of those holds, greedy breaks. Add values to the meetings and the exchange argument collapses, because a single valuable meeting can be worth more than three cheap ones — that version needs DP.",
+      "So when someone asks why your greedy works, they are asking for those two sentences. Practise giving them.",
+    ],
     mentalModel: {
       lines: [
         "Take whatever finishes first.",
@@ -539,6 +571,15 @@ func selectActivities(a []Activity) []Activity {
       "the exchange property holds: given two valid sets of different sizes, the larger can donate an element to the smaller",
     ],
     typicalQuestion: "Is sorting by this key and taking greedily guaranteed to be optimal?",
+    teach: [
+      "You have a greedy rule that seems to work. How do you know it is not just working on your examples?",
+      "There is a structure where greedy is guaranteed correct, and two quick questions tell you whether you are in it.",
+      "First: if a set of choices is valid, is every smaller part of it also valid? For forests in a graph, yes — remove an edge from a loop-free set and it is still loop-free.",
+      "Second: take a valid set and a strictly larger valid set. Can the smaller one always borrow an item from the bigger one and stay valid? For forests, yes again: a bigger forest always has an edge joining two parts the smaller one has not connected.",
+      "When both hold, sorting by value and taking whatever keeps the set valid is not a heuristic — it is exactly optimal. That is precisely why Kruskal works.",
+      "Keep two counterexamples in your pocket for when they do not hold. Coin change with 1, 3 and 4: greedy makes 6 with three coins, the answer is two. Weighted intervals: one job worth 100 against two worth 5 each, and earliest-finish greedy takes the wrong pair. Both need DP.",
+      "In practice this is a two-minute check, not a proof exercise. If you cannot see the exchange, write the DP and move on.",
+    ],
     mentalModel: {
       lines: [
         "Two quick tests tell you whether greedy is safe.",
@@ -637,6 +678,14 @@ amount := 6
       "the answer is feasibility or a minimum count over a single sweep",
     ],
     typicalQuestion: "Can you reach the last index, given each index's maximum jump length?",
+    teach: [
+      "Some problems need no table and no sort. You sweep once, carrying a single number, and the answer falls out.",
+      "Jump Game is the plainest. Each position tells you how far you may jump. Rather than exploring jumps, track one thing: the furthest index reachable so far. At each position, update it. If you ever stand on a position beyond that reach, you are stranded.",
+      "Gas Station is the one that teaches the real lesson. Driving round a circle, and at station i the tank goes negative, which start points does that rule out? Not just that one. Every start from your last restart up to i is also doomed, because each of them begins partway through a stretch whose total was not negative to begin with — so they can only do worse.",
+      "That is why one pass replaces trying all n starting points. Failing at i does not eliminate one candidate, it eliminates a whole block, so you jump straight to i+1 and carry on.",
+      "Whenever you are tempted to try every starting point, ask that question: does failing here rule out everything before it? When the answer is yes, the nested loop collapses.",
+      "Sometimes the running number is about flexibility rather than reach. Giving change, spend the least useful note first and hold on to the ones that fit everywhere.",
+    ],
     mentalModel: {
       lines: [
         "Carry one running number: how far you can get, or how much you are short by.",

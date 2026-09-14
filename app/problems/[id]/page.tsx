@@ -163,7 +163,7 @@ export default async function ProblemPage({
             />
             <Link
               href={`/patterns/${primary.slug}#template`}
-              className="mt-4 inline-block font-mono text-2xs text-fg-muted transition-colors duration-150 hover:text-accent"
+              className="mt-4 inline-block text-[12.5px] text-fg-muted transition-colors duration-150 hover:text-accent"
             >
               All {primary.templates.length} {primary.title} templates →
             </Link>
@@ -190,7 +190,7 @@ export default async function ProblemPage({
             </div>
             <Link
               href={`/patterns/${primary.slug}#practice`}
-              className="mt-4 inline-block font-mono text-2xs text-fg-muted transition-colors duration-150 hover:text-accent"
+              className="mt-4 inline-block text-[12.5px] text-fg-muted transition-colors duration-150 hover:text-accent"
             >
               See all →
             </Link>

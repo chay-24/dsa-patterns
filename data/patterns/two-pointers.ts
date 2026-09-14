@@ -17,6 +17,12 @@ export const twoPointers: Pattern[] = [
       "two sorted sequences must be walked together",
     ],
     typicalQuestion: "Find two numbers in a sorted array that sum to a target.",
+    teach: [
+      "You have a sorted array and you need two numbers adding up to 9. The obvious move is to try every pair: take the first number, scan the rest for its partner, repeat. That is n times n work, and it throws away the one thing you were handed for free — the order.",
+      "Put one finger on the smallest number and one on the largest. Add them. If the total is too small, the only way to raise it is to move the left finger right, because the right one is already as big as it gets. If the total is too big, move the right finger left for the same reason.",
+      "Now think about what that move throws away. When the left finger steps past a number, you are not skipping one pair — you are saying that number cannot work with anything the right finger could still reach. One comparison rules out a whole row of the table you were about to search.",
+      "Each finger only ever moves inward, so between them they take at most n steps. The nested loop is gone. The same two-index idea also runs in one direction: a slow writer trailing a fast reader, which is how you rewrite an array in place.",
+    ],
     mentalModel: {
       lines: [
         "Start at both ends and walk inwards.",
@@ -165,6 +171,13 @@ export const twoPointers: Pattern[] = [
       "a one-pass, constant-space requirement over a list",
     ],
     typicalQuestion: "Detect whether a linked list has a cycle, in O(1) space.",
+    teach: [
+      "You are handed the head of a linked list and asked whether it loops back on itself. You cannot see the whole thing, and you are told not to use extra memory, so a set of visited nodes is out.",
+      "Send two walkers down the list. The slow one takes one step at a time, the fast one takes two. If the list ends, the fast one falls off and you have your answer: no loop.",
+      "If there is a loop, both walkers end up inside it, and now the fast one gains exactly one place on the slow one every step. A gap that shrinks by one every time must eventually reach zero. They cannot jump past each other, so they land on the same node.",
+      "The same pair does other work for free. Let the fast one run to the end and the slow one is standing at the middle, without ever counting the length. Start them n apart instead of together, move them in step, and when the leader falls off the end the follower is exactly n from the back.",
+      "It goes beyond lists. Any rule where each thing points at exactly one next thing — index i leads to nums[i], a number leads to its digit-square-sum — is a chain that must eventually repeat. The same two walkers find it.",
+    ],
     mentalModel: {
       lines: [
         "Slow moves one step, fast moves two.",
@@ -285,6 +298,12 @@ export const twoPointers: Pattern[] = [
       "the thing you track can be added to and taken away from: a sum, a count",
     ],
     typicalQuestion: "Find the maximum sum of any subarray of length k.",
+    teach: [
+      "Find the largest sum of any three neighbouring numbers. The direct approach takes each starting point and adds up the three that follow. For a window of size k that is k additions per position, and nearly all of them repeat work you just did.",
+      "Look at two neighbouring windows. Positions 2, 3, 4 and positions 3, 4, 5 share almost everything — only one number joined and one number left.",
+      "So stop rebuilding. Add the number entering on the right, subtract the number leaving on the left, and the total is correct again. One add and one subtract per step, no matter how wide the window is.",
+      "That works whenever the thing you track can be undone. Sums and counts can. A maximum cannot — knowing the biggest number in the window tells you nothing once it leaves — and that is exactly when you reach for a deque instead.",
+    ],
     mentalModel: {
       lines: [
         "Fill the first k elements, then slide.",
@@ -404,6 +423,13 @@ export const twoPointers: Pattern[] = [
       "for sums, the values are all positive, so a bigger window means a bigger sum",
     ],
     typicalQuestion: "Find the longest substring containing at most K distinct characters.",
+    teach: [
+      "Find the longest stretch of a string containing at most two different letters. Trying every start with every end means n squared stretches, and most of them repeat work.",
+      "Keep a left edge and a right edge instead. Push the right edge out one step at a time, taking in a new letter. If the stretch is still allowed, carry on. If it has broken the rule, pull the left edge in until it is allowed again.",
+      "Why is it safe to pull left in and never push it back out? Because of the kind of rule this is. If a stretch already has three different letters, then any longer stretch containing it has three as well. Breaking the rule is permanent. So once the left edge passes a position, that position can never start a valid answer ending further right.",
+      "Both edges only move forward, at most n steps each, so the whole scan is linear even though it looks like a loop inside a loop.",
+      "The last thing to get right is when you write the answer down. For a longest, record after the shrinking stops — that is when the window is valid and as wide as it gets. For a shortest, record inside the shrinking loop, where it is valid and as narrow as it gets.",
+    ],
     mentalModel: {
       lines: [
         "Move right to take in a new element.",
@@ -550,6 +576,13 @@ func atMostKDistinct(nums []int, k int) int {
       "biggest sum with no length limit: that is Kadane, not a window",
     ],
     typicalQuestion: "How many subarrays sum to exactly k?",
+    teach: [
+      "'Subarray' and 'substring' both mean a run of neighbours with nothing skipped. Nearly every one of these problems is solved by one of three tools, and choosing between them is the actual work.",
+      "Ask one question first: once a stretch breaks the rule, does every bigger stretch around it break it too? If yes, a sliding window works, because the left edge can move forward and never come back.",
+      "If the answer is no — usually because negative numbers are allowed, so growing the window can make the sum go down again — the window falls apart. Reach for prefix sums instead. Every subarray total is one running total minus another, and signs do not bother that at all.",
+      "If instead you want the biggest sum with no length limit, neither applies. That is Kadane: at each position ask whether it is better to extend the run you are on or start a fresh one here.",
+      "And when the question is 'how many subarrays', count by their right end. Fix the end, work out how many starts make it valid, and add that up as you sweep.",
+    ],
     mentalModel: {
       lines: [
         "All values positive and the rule one-sided? Sliding window.",
@@ -655,6 +688,13 @@ func atMostKDistinct(nums []int, k int) int {
       "you need to count subarrays, not just find one",
     ],
     typicalQuestion: "Count the subarrays whose sum equals k, where values may be negative.",
+    teach: [
+      "Count the subarrays that add up to exactly k, where some numbers are negative. The window trick dies here: shrinking a window with negatives in it can make the total go up, so there is no safe direction to move.",
+      "Go back to running totals. Keep one number as you sweep: the sum of everything so far. Call it cur.",
+      "Any subarray total is the difference of two running totals. So a subarray ending here adds up to k exactly when some earlier running total equalled cur - k. You are no longer looking for a subarray — you are looking up a number.",
+      "Keep a map of every running total you have seen and how often. At each step, add up how many times cur - k appeared. That is how many subarrays end right here. Sweep once and you have them all.",
+      "One line makes or breaks this: seed the map with zero seen once. A subarray that starts at the very beginning needs an 'earlier total' of 0 to subtract, and if it is not in the map those answers vanish silently.",
+    ],
     mentalModel: {
       lines: [
         "Every subarray sum is the difference of two running totals.",
@@ -782,6 +822,13 @@ func atMostKDistinct(nums []int, k int) int {
       "linear time demanded on a large string → Manacher",
     ],
     typicalQuestion: "Find the longest palindromic substring.",
+    teach: [
+      "A palindrome reads the same both ways. To check one, walk in from both ends comparing as you go — that part is easy.",
+      "Finding the longest one inside a string is different. The trick is to stop thinking about where palindromes start and end, and think about where they are centred.",
+      "Every palindrome has a middle. For 'aba' the middle is a letter; for 'abba' the middle sits between two letters. So a string of length n has 2n-1 possible centres. Stand on each one and push outwards while the two sides still match. The furthest you get is the biggest palindrome centred there.",
+      "That is n centres and up to n steps each, so n squared — usually fine. Manacher's algorithm gets it down to linear by reusing what nearby centres already proved, but only reach for it when the string is genuinely huge.",
+      "One distinction to keep straight. 'Substring' means neighbours with nothing skipped, and that is what expanding from centres finds. 'Subsequence' allows gaps, and expansion cannot see those at all — that is an interval DP.",
+    ],
     mentalModel: {
       lines: [
         "A palindrome is defined by its centre.",

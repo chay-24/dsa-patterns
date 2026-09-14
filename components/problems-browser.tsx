@@ -110,7 +110,7 @@ export function ProblemsBrowser({
 
       <div className="mt-6 flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-3">
         <ProgressSummary total={problems.length} />
-        <span className="font-mono text-2xs tabular-nums text-fg-faint">
+        <span className="text-[12px] tabular-nums text-fg-faint">
           showing {filtered.length}
         </span>
       </div>

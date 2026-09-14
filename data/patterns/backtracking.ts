@@ -15,6 +15,14 @@ export const backtracking: Pattern[] = [
       "order within a result does not matter — otherwise it is permutations",
     ],
     typicalQuestion: "Return all possible subsets of a set of distinct integers.",
+    teach: [
+      "List every possible subset of a set. For each element there are two choices — take it or leave it — and those choices are independent, so there are 2 to the n subsets. That number is why these problems always come with a small n.",
+      "Recursion writes itself. At position i, try including the element, recurse, then undo and try without it.",
+      "The part people miss is when to record. Every partial selection is already a valid subset, so record at every step, not only at the bottom of the recursion.",
+      "And always copy before you store. The slice you are building keeps changing underneath you, so appending it directly means every saved result points at the same memory and they all end up identical. That single line is the most common backtracking bug there is.",
+      "For distinct elements there is a neater route with no recursion at all. Count from 0 to 2^n - 1 and read the bits of each number: bit i on means element i is in. Same answer, half the code.",
+      "Duplicates need one guard. Sort first so equal values sit together, then at each level skip a value identical to the one just tried. That stops the same subset being built two different ways, while still allowing a value to be used twice at different depths.",
+    ],
     mentalModel: {
       lines: [
         "Every element is one yes/no choice: take it or leave it.",
@@ -135,6 +143,14 @@ export const backtracking: Pattern[] = [
       "reuse allowed means recursing with i; reuse forbidden means i+1",
     ],
     typicalQuestion: "Find all unique combinations summing to a target.",
+    teach: [
+      "Combinations are subsets with a rule attached — a fixed size, or a target total. And order does not matter, so [1,2] and [2,1] are the same answer and you must only produce one of them.",
+      "The way to enforce that is a start index. Each level only considers elements from that index onwards, so your picks always come out in increasing position order and a reordering can never be generated.",
+      "One character then decides whether an element can repeat. Recurse with i and the current element is still on the table, so it can be picked again. Recurse with i+1 and you have moved past it for good.",
+      "Now pruning, which is what makes these fast. Sort the candidates first. Then the moment a candidate exceeds what is left of the target, you can break rather than continue — everything after it is larger and equally hopeless.",
+      "Choosing k of n prunes differently: if the elements left are fewer than the slots still to fill, stop immediately.",
+      "Duplicates use the same guard as subsets. Sort, and skip a candidate equal to the previous one at the same level.",
+    ],
     mentalModel: {
       lines: [
         "Order does not matter, so force the picks to go left to right.",
@@ -307,6 +323,14 @@ export const backtracking: Pattern[] = [
       "n is small — 8 or 9 at most for a full enumeration",
     ],
     typicalQuestion: "Return all permutations of a list of distinct integers.",
+    teach: [
+      "Now order does matter, and every element must appear exactly once. That means n! arrangements — 10! is three and a half million, 13! is over six billion. Check n before you start.",
+      "At each position, choose any element not yet used. Track that with a used[] array: mark before recursing, unmark after.",
+      "There is a neater version with no extra array. Swap the chosen element into the current position, recurse, then swap it back. Everything from the current position onwards is, by construction, still unused.",
+      "Duplicates need a different guard from combinations, and this is worth getting straight. With three identical values, you want them to fill three slots — you just do not want to start the same branch twice.",
+      "So sort, and skip a duplicate only when its identical neighbour is currently unused. That means the leftmost copy always goes first, giving exactly one canonical ordering among the identical ones. Copying the combinations rule here gives wrong answers.",
+      "If you only need a count or a best value rather than the list itself, stop. That is bitmask DP at 2^n times n, not n!, and the difference is enormous.",
+    ],
     mentalModel: {
       lines: [
         "At each position, choose any element you have not used yet.",
@@ -475,6 +499,14 @@ export const backtracking: Pattern[] = [
       "the branching factor shrinks fast as constraints accumulate",
     ],
     typicalQuestion: "Place n queens on an n×n board so that none attack each other.",
+    teach: [
+      "Place n queens on an n by n board so none attack each other. The board has n squared squares, but one observation cuts it down immediately: exactly one queen per row. So the recursion depth is the row number, and at each row you only choose a column.",
+      "Now you need to test whether a square is attacked, and doing that by scanning the board costs O(n) each time.",
+      "Instead notice how diagonals work. Along a down-right diagonal, r minus c never changes. Along a down-left diagonal, r plus c never changes. So a diagonal is just a number.",
+      "Keep three sets of taken values — columns, r plus c, and r minus c — and every attack test becomes a single lookup. Mark all three on the way in, clear all three on the way out.",
+      "One Go detail: r minus c can be negative, so offset it by n before indexing.",
+      "The pruning does the real work. A partial board with a conflict is abandoned instantly rather than completed and then rejected, which is why a problem that looks like n! finishes immediately for reasonable n. Swapping the three sets for bitmasks makes it faster again.",
+    ],
     mentalModel: {
       lines: [
         "One queen per row, so the depth of the recursion is the row.",
@@ -587,6 +619,14 @@ export const backtracking: Pattern[] = [
       "filling the most constrained cell first shrinks the search enormously",
     ],
     typicalQuestion: "Fill the empty cells of a Sudoku board.",
+    teach: [
+      "Filling a Sudoku is constraint search. Every empty cell has nine candidates, and three rules — row, column, and 3 by 3 box — say which are allowed.",
+      "Checking a candidate by scanning the row, column and box costs about 27 reads. Instead keep three sets of used digits, one per row, column and box, updated as you place and remove. Now every check is one lookup. The box number is (r/3)*3 + c/3.",
+      "Then try a digit, recurse, and undo if it fails.",
+      "That alone can still be slow. The thing that makes it instant is choosing which cell to fill next. Do not take them in order — take the cell with the fewest candidates left.",
+      "It is the same instinct a person has. You do not fill a Sudoku left to right; you look for the cell that is nearly decided, because it has the fewest ways to go wrong. Fewer branches at the top of the tree means an enormously smaller tree.",
+      "One last detail specific to search problems that stop at the first solution: when the recursion succeeds, return true all the way up without undoing anything. Undo on the way out and you will cheerfully erase the answer you just found.",
+    ],
     mentalModel: {
       lines: [
         "Keep three sets of used digits: per row, per column, per box.",
@@ -712,6 +752,14 @@ func (s *Sudoku) set(r, c, d int, on bool) {
       "the search is exponential unless you prune",
     ],
     typicalQuestion: "Generate all well-formed combinations of n pairs of parentheses.",
+    teach: [
+      "Backtracking is a single shape: choose, recurse, undo. What separates a working solution from one that hangs is pruning.",
+      "Take generating all valid strings of n bracket pairs. The naive approach builds every string of the right length and throws away the invalid ones. That is 2 to the 2n strings, nearly all rubbish.",
+      "Instead make the invalid ones impossible to build. Track how many brackets you have opened and closed. You may open one while you have opened fewer than n. You may close one while you have closed fewer than you have opened. Follow those two rules and every string you produce is valid — nothing is ever generated and then rejected.",
+      "That is the whole discipline. Do not generate and filter. Check before you commit, and cut the branch as high in the tree as you can.",
+      "It helps to make the check cheap. Splitting a string into palindromes means testing 'is this piece a palindrome' constantly, so build the table of all such answers up front and each test becomes one lookup.",
+      "Two habits to keep: always undo what you marked, or state leaks into the next branch and the results are quietly wrong; and if different paths keep arriving at identical situations, stop — you have DP, and backtracking is doing exponential work for a polynomial problem.",
+    ],
     mentalModel: {
       lines: [
         "Choose, recurse, undo.",

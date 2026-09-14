@@ -117,7 +117,7 @@ export function ProgressSummary({ total }: { total: number }) {
           </button>
         </>
       ) : (
-        <span className="text-fg-faint">
+        <span className="font-sans text-[12px] text-fg-faint">
           click a circle to track a problem
         </span>
       )}

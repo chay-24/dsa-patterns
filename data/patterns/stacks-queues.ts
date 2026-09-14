@@ -16,6 +16,13 @@ export const stacksQueues: Pattern[] = [
       "you are converting a recursive walk into an explicit loop",
     ],
     typicalQuestion: "Determine whether a string of brackets is balanced.",
+    teach: [
+      "A stack is a pile. You can only add to the top and only take from the top. That sounds limiting until you notice how many problems are about things that nest.",
+      "Brackets nest. Folders nest. Function calls nest. In all of them the thing you have to deal with next is always the most recent unfinished one — and that is exactly what a stack hands you.",
+      "Check a bracket string this way. Every time an opener arrives, push the closer you will need. Every time a closer arrives, it has to match the top of the pile; if it does not, the string is broken. At the end the pile must be empty, or something was left open.",
+      "In Go you do not need a container. A slice is a stack: append to push, take the last element to peek, reslice by one to pop. Just check the length before every pop, because indexing an empty slice panics.",
+      "One more use worth knowing. Any recursion can be rewritten as a loop with an explicit stack. Reach for that when the depth could be large enough to worry you.",
+    ],
     mentalModel: {
       lines: [
         "A stack remembers unfinished business.",
@@ -161,6 +168,12 @@ func (s *MinStack) GetMin() int { return s.mins[len(s.mins)-1] }`,
       "a sliding time window over a stream of events",
     ],
     typicalQuestion: "Return a binary tree's nodes level by level.",
+    teach: [
+      "A queue is a line. Things leave in the order they arrived. That single property is what makes breadth-first search find shortest paths.",
+      "Think about why. If you always process the oldest discovered thing first, then you finish everything one step from the start before you touch anything two steps away. Distance grows in rings, and the first time you reach something, you reached it the fastest possible way.",
+      "In Go a queue is a slice with a moving front: read queue[0], then reslice with queue = queue[1:].",
+      "The one trick you need for level-by-level work: before processing a level, save the current length. Everything you add during the level belongs to the next one, and if you keep re-reading len(queue) the levels blur together and your depth count goes wrong.",
+    ],
     mentalModel: {
       lines: [
         "A queue is a to-do list: found, but not dealt with yet.",
@@ -289,6 +302,13 @@ func (q *Ring) Pop() (int, bool) {
       "prefix sums plus a 'shortest valid' constraint, with negatives in play",
     ],
     typicalQuestion: "Return the maximum of every window of size k.",
+    teach: [
+      "Find the maximum in every window of size k. The fixed-window trick of adding one and subtracting one fails here, because a maximum cannot be un-subtracted. Once the biggest number leaves, you have no idea what the new biggest is.",
+      "So keep more than one candidate. Hold a list of positions that could still be the answer for some future window.",
+      "Now the key observation. Suppose a new number arrives and it is bigger than the one just behind it in your list. That older number is finished. It is smaller and it will leave the window sooner — there is no future window where it wins and the new one does not. So throw it away, immediately and permanently.",
+      "Keep doing that and your list stays sorted from biggest at the front to smallest at the back. The front is always the answer for the current window. Drop the front when it falls out of range.",
+      "It looks like a loop inside a loop, but each position is added once and removed once across the entire scan, so it is linear. The same structure handles a DP where each state needs the best of the previous k states.",
+    ],
     mentalModel: {
       lines: [
         "Keep a list of indices that could still win.",
@@ -423,6 +443,14 @@ func (q *Ring) Pop() (int, bool) {
       "you are counting each element's contribution as a minimum or maximum",
     ],
     typicalQuestion: "For each day, how many days until a warmer temperature?",
+    teach: [
+      "For each day, how many days until it gets warmer? The obvious answer is to look forward from each day until you find a warmer one, which is n squared when the temperatures fall steadily.",
+      "Turn it around. Walk forward once, keeping a pile of days that are still waiting for their answer.",
+      "When today's temperature arrives, look at the top of the pile. If today is warmer, that day just got its answer — pop it and write it down. Keep popping while today beats the top. Then push today on, to wait its own turn.",
+      "The pile stays sorted with the coldest on top, which is why the popping works: the moment today fails to beat the top, it fails to beat everything below it too, so you can stop.",
+      "The inner while loop looks alarming, but each day is pushed exactly once and popped at most once, so the whole thing is n pushes and n pops. Linear.",
+      "Everything else here is a variation on which comparison pops. Scan right for the next greater, scan left for the previous, flip the comparison for smaller. The pop is always the moment something gets its answer — whatever you need to record, record it there.",
+    ],
     mentalModel: {
       lines: [
         "Keep the stack sorted, either increasing or decreasing.",
@@ -562,6 +590,13 @@ func sumSubarrayMins(a []int) int {
       "a circular array turns the same question into two passes",
     ],
     typicalQuestion: "For each element, find the next greater element to its right.",
+    teach: [
+      "This is the plainest use of a monotonic stack, and the one worth having in your fingers.",
+      "Walk left to right holding a stack of positions that have not yet found a bigger value. The stack is decreasing: the newest is the smallest.",
+      "Each new value settles everything it beats. Pop while the top is smaller, and each popped position now knows its answer is the value you are standing on. Then push the current position, because it is waiting too.",
+      "Whatever is still on the stack at the end never found a bigger value, so decide up front what that means — usually -1 for a value, or 0 for a distance — and set the answers to that before you start.",
+      "Store positions, not values. If the question is 'how many days until', you need the gap between the two indices, and a value cannot tell you that. For a circular array, walk the array twice and take the index modulo n, but only push during the first lap.",
+    ],
     mentalModel: {
       lines: [
         "Keep a stack of indices still waiting for an answer.",
@@ -655,6 +690,13 @@ func sumSubarrayMins(a []int) int {
       "you are summing a quantity over all subarrays where each element is the extreme",
     ],
     typicalQuestion: "For each element, find the span in which it is the minimum.",
+    teach: [
+      "This is the mirror of next greater, and it is the one that turns up whenever an element rules a stretch.",
+      "For each position, find the nearest smaller value to its left, and the nearest smaller value to its right. Those two are walls. Between them, the element you started from is the smallest thing there is.",
+      "That stretch is exactly where the element matters. In a histogram it is how wide a rectangle of that height can be. In 'sum of subarray minimums' it is the set of subarrays where this element is the minimum — (i minus the left wall) choices for the start, times (right wall minus i) for the end.",
+      "Both walls come from one pass each with an increasing stack, the same machinery as next greater with the comparison flipped.",
+      "One subtlety with duplicates. If both walls use the same comparison, a run of equal values gets counted several times. Make one side strict and the other not, and each stretch is attributed to exactly one element.",
+    ],
     mentalModel: {
       lines: [
         "Find the nearest smaller value on the left and on the right.",
@@ -735,6 +777,13 @@ func sumSubarrayMins(a []int) int {
       "you cannot look ahead, so the offline two-pass approach is unavailable",
     ],
     typicalQuestion: "For each incoming price, how many consecutive previous days were at most as high?",
+    teach: [
+      "Prices arrive one at a time and after each one you must answer straight away: how many days back, counting today, were at most as high?",
+      "You cannot look ahead, so the offline two-pass trick is unavailable. But the stack idea still works.",
+      "Keep a decreasing stack of prices — but store a span alongside each one, meaning how many days that price already speaks for.",
+      "When a new price arrives, pop everything it beats, and add up the spans as you pop. Each popped price was covering some days, and since today is at least as high as it was, today covers those days too. The total you accumulated is today's answer, and you push it along with the new price.",
+      "Folding the spans into the survivor is what makes this work. Without it you would have to walk back over the popped days one by one. With it, each price is pushed once and popped once, so each answer costs O(1) on average across the stream.",
+    ],
     mentalModel: {
       lines: [
         "Keep a decreasing stack of (value, span) pairs.",
@@ -799,6 +848,13 @@ func (s *StockSpanner) Next(price int) int {
       "the brute force is 'for each pair of boundaries, find the minimum'",
     ],
     typicalQuestion: "Find the largest rectangle that fits inside a histogram.",
+    teach: [
+      "Bars of different heights stand side by side. Find the biggest rectangle that fits inside them. Trying every pair of edges and taking the minimum height in between is n squared or worse.",
+      "Flip the question. Instead of asking about every rectangle, ask about every bar: if this bar is the shortest one in the rectangle, how wide can the rectangle get?",
+      "The answer is bounded by the first shorter bar on each side. Stretch left until something shorter blocks you, stretch right the same way, and that width times this bar's height is the best rectangle where this bar is the limit.",
+      "Every rectangle has some shortest bar, so checking all n bars this way is guaranteed to find the winner. And both walls come straight off a monotonic stack — when a bar gets popped, the bar that arrived is its right wall and the new top of the stack is its left wall.",
+      "Add one imaginary bar of height 0 at the end and the stack empties itself, which saves writing a separate cleanup loop. The same solver, run once per row over a running heights array, solves the maximal-rectangle-in-a-binary-matrix problem too.",
+    ],
     mentalModel: {
       lines: [
         "Pick a bar and call it the shortest one in the rectangle.",
@@ -904,6 +960,14 @@ func (s *StockSpanner) Next(price int) int {
       "many sources spread at once — seed them all",
     ],
     typicalQuestion: "What is the minimum number of moves to reach the target state?",
+    teach: [
+      "Breadth-first search finds the fewest moves. The discipline that makes it work is small but easy to get wrong.",
+      "Process things in the order they were discovered. That means everything one move from the start is handled before anything two moves away, so distance grows outwards in rings.",
+      "Because of that, the very first time you reach a node, you reached it by a shortest route. There is no better path waiting to be found later.",
+      "Which gives the rule people most often break: mark a node as seen the moment you put it in the queue, not when you take it out. If you wait, the same node gets queued by every neighbour that touches it, and the queue balloons.",
+      "To count moves, handle one ring at a time. Save the queue length before the ring, process exactly that many, then add one to your step count.",
+      "And remember the precondition. BFS counts steps, so every step must cost the same. The moment edges have different costs, rings no longer line up with distance, and you need Dijkstra.",
+    ],
     mentalModel: {
       lines: [
         "BFS spreads out in rings, one step at a time.",
@@ -1048,6 +1112,13 @@ func gridBFS(grid [][]int, sr, sc int) [][]int {
       "you are asked to design a queue or deque with O(1) operations",
     ],
     typicalQuestion: "Design a circular queue with O(1) enqueue and dequeue.",
+    teach: [
+      "A queue on a fixed array. When you reach the end you wrap around to the front, so the memory never grows.",
+      "The obvious design keeps a head index and a tail index. It has an annoying flaw: when head equals tail, is the queue empty, or completely full? The two look identical. The usual fix is to waste one slot so they can never coincide.",
+      "Keep a head and a count instead. Now empty is count == 0 and full is count == capacity, with no ambiguity and no wasted slot. The tail is derived when you need it: (head + count) mod capacity.",
+      "Every index goes through one modulo, and both ends cost O(1).",
+      "One Go-specific trap. When you push to the front you compute head - 1, and in Go that can go negative — the % operator keeps the sign of the left-hand side. Always add the capacity first: (head - 1 + n) % n.",
+    ],
     mentalModel: {
       lines: [
         "Store a head and a count, not a head and a tail.",
@@ -1153,6 +1224,13 @@ func (q *MyCircularDeque) DeleteLast() bool {
       "you are merging many sorted sequences",
     ],
     typicalQuestion: "Find the k-th largest element in a stream.",
+    teach: [
+      "You need the smallest item over and over, and the collection keeps changing. Sorting gives you the order but falls apart as soon as you insert. Scanning for the minimum is O(n) every time.",
+      "A heap is the compromise. It does not sort everything — it only guarantees that every parent is smaller than its children. That is far less work to maintain, and it is enough to put the smallest item at the root where you can read it instantly. Fixing the tree after a change costs log n, because you only walk one path up or down.",
+      "Now the part that trips people up. To keep the k largest items, use a MIN-heap of size k. That feels backwards, but think about what you need: you need to know the weakest of the ones you are keeping, so that when a new number arrives you can decide whether to swap it in. The weakest is the minimum, so it belongs at the root.",
+      "Two heaps pointing at each other give you a running median: a max-heap holding the lower half, a min-heap holding the upper half, kept within one item of each other. The two roots straddle the middle.",
+      "In Go, container/heap is more ceremony than most languages — five methods on your slice type. Two rules: call heap.Push and heap.Pop, never the methods directly, or the tree is never repaired; and build from an existing slice with heap.Init, which is O(n), rather than pushing one at a time.",
+    ],
     mentalModel: {
       lines: [
         "A heap only keeps the path to the top sorted.",

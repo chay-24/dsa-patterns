@@ -84,7 +84,7 @@ export default function Home() {
           </h2>
           <Link
             href="/patterns"
-            className="font-mono text-2xs text-fg-muted transition-colors duration-150 hover:text-accent"
+            className="text-[12.5px] text-fg-muted transition-colors duration-150 hover:text-accent"
           >
             View all →
           </Link>
@@ -139,11 +139,41 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="mt-20 border-t border-border pt-6">
-        <p className="font-mono text-2xs leading-relaxed text-fg-faint">
+      <footer className="mt-20 space-y-3 border-t border-border pt-6">
+        <p className="text-[12px] leading-relaxed text-fg-faint">
           Recognise → Understand → Template → Practice.
           <br />
           Progress is stored in this browser only. No account, no backend.
+        </p>
+        <p className="max-w-[64ch] text-[12px] leading-relaxed text-fg-faint">
+          The Go gopher was designed by{" "}
+          <a
+            href="http://reneefrench.blogspot.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-fg-muted underline decoration-dotted underline-offset-2 transition-colors hover:text-fg-secondary"
+          >
+            Renée French
+          </a>
+          . The vector artwork is by{" "}
+          <a
+            href="https://github.com/golang-samples/gopher-vector"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-fg-muted underline decoration-dotted underline-offset-2 transition-colors hover:text-fg-secondary"
+          >
+            Takuya Ueda
+          </a>
+          , used under{" "}
+          <a
+            href="https://creativecommons.org/licenses/by/3.0/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-fg-muted underline decoration-dotted underline-offset-2 transition-colors hover:text-fg-secondary"
+          >
+            CC BY 3.0
+          </a>{" "}
+          and cropped to the head for use as an icon.
         </p>
       </footer>
     </Page>

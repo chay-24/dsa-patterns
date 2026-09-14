@@ -16,6 +16,13 @@ export const graphs: Pattern[] = [
       "the input is an edge list that must become an adjacency list first",
     ],
     typicalQuestion: "Given n nodes and an edge list, determine reachability.",
+    teach: [
+      "Before any graph algorithm, you have to decide how the graph is stored. Get this wrong and everything after it is awkward.",
+      "The default is an adjacency list: for each node, a slice of the nodes it connects to. Space is proportional to nodes plus edges, and walking a node's neighbours is instant. This is what you want almost every time.",
+      "An adjacency matrix — a grid of booleans — is only worth it when the graph is dense, or when you need to answer 'is there an edge between these two' in one step. At a hundred thousand nodes the matrix would need ten billion cells, so it is off the table.",
+      "The third form is the one people miss: some graphs are never built at all. A grid is a graph where each cell has four neighbours you can compute from its coordinates. A word ladder is a graph where neighbours are the words one letter away. In both, you write a function that produces neighbours on demand and never store a single edge.",
+      "Two things to be careful about. An undirected edge must be added in both directions, or half your graph quietly disappears. And plenty of problems number their nodes from 1, so size the slice n+1 or subtract as you go.",
+    ],
     mentalModel: {
       lines: [
         "Adjacency list: a slice of slices. The default choice.",
@@ -149,6 +156,13 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       "the state space is finite and enumerable",
     ],
     typicalQuestion: "What is the minimum number of transformations from beginWord to endWord?",
+    teach: [
+      "You want the fewest moves from one state to another. Every move costs the same — one step on a grid, one letter changed, one turn of a dial.",
+      "Explore in rings. Start with the source. Then everything one move away. Then everything one move from those. Because you never look at a further ring before finishing the current one, the ring number is the distance.",
+      "That gives you the property BFS is famous for: the first time you reach a node, you reached it by a shortest route. Nothing better can turn up later.",
+      "Which leads to the rule that matters most in practice. Mark a node as seen the moment you add it to the queue, never when you remove it. If two neighbours both discover the same node before it is processed, and you have not marked it, it goes in twice — and on a dense graph that multiplies until the queue is unusable.",
+      "Where people go wrong is forgetting the precondition. BFS counts steps, so every step has to cost the same. As soon as edges have different weights, rings stop matching distance and you need Dijkstra instead.",
+    ],
     mentalModel: {
       lines: [
         "BFS takes nodes in order of distance.",
@@ -295,6 +309,14 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       "all paths must be enumerated — that is DFS with backtracking",
     ],
     typicalQuestion: "How many islands are there in this grid?",
+    teach: [
+      "Depth-first search follows one path as far as it goes, then backs up and tries the next. It answers different questions from BFS: not how far, but what is reachable, what is connected, and what shape the graph has.",
+      "The code is three lines. Mark the node. For each neighbour not yet marked, recurse. That is it.",
+      "On a grid this is flood fill. Every unvisited land cell starts a new region, and the search paints the whole region before returning. Count the times you start a fresh search and you have counted the islands.",
+      "One decision changes everything: do you unmark on the way out? For reachability, no — once a node is done it is done, and the whole search is linear. For enumerating every path, yes, you must unmark, and the cost becomes exponential because you really are visiting every path. Know which one you are writing.",
+      "On an undirected graph, always skip the node you came from. Otherwise the first neighbour you look at is your own parent and you bounce back and forth forever.",
+      "The extra power in DFS comes from timing. Record when you first reach each node and how far back a node can reach, and out fall bridges, articulation points and strongly connected components — all from the same walk.",
+    ],
     mentalModel: {
       lines: [
         "Mark a node, then walk into each neighbour.",
@@ -462,6 +484,14 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       "items need to be merged transitively — accounts, emails, friends",
     ],
     typicalQuestion: "How many separate provinces are there in this connectivity matrix?",
+    teach: [
+      "How many separate groups are there? Islands in a grid, provinces in a matrix, clusters of related accounts — all the same question.",
+      "The method is almost too simple. Loop over every node. If you have already seen it, skip it. If not, start a search from it and let that search mark everything reachable.",
+      "The count you want is not the number of nodes visited — it is the number of times you had to start a fresh search. Each fresh start is a group nothing before it could reach.",
+      "That distinction is where the bug usually lives: increment the counter in the outer loop, not inside the search.",
+      "Two things to remember. A node with no edges at all is still a group of one. And on a directed graph this counts weak groups only, ignoring direction — if you need mutual reachability, that is strongly connected components, which is a harder question.",
+      "When the edges arrive over time rather than all at once, do not re-run the search. That is what Union-Find is for.",
+    ],
     mentalModel: {
       lines: [
         "Start a search from each node you have not seen.",
@@ -596,6 +626,14 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       "a topological order exists if and only if there is no cycle",
     ],
     typicalQuestion: "Can all courses be finished given these prerequisites?",
+    teach: [
+      "'Can I finish all these courses?' is really 'does this dependency graph contain a loop?'. The method depends on whether the edges have direction.",
+      "Undirected first, because it is easier. Walk the graph and mark nodes as you go. If you meet a node you have already seen, and it is not the one you just came from, you have closed a loop. The parent check is essential — without it, every single edge looks like a two-node cycle.",
+      "Directed is trickier, and a single seen flag is not enough. Two paths can legitimately reach the same node without any loop existing — think of a diamond.",
+      "So use three colours. White means untouched. Grey means 'on the path I am walking right now'. Black means 'fully explored, and nothing bad was found below it'. Colour a node grey on the way in and black on the way out.",
+      "Now an edge into a grey node means you have looped back onto your own path, which is a genuine cycle. An edge into a black node is just a shortcut into finished territory, and is harmless. That difference is exactly what the single flag could not express.",
+      "There is also a counting shortcut. Repeatedly remove nodes that nothing depends on any more. If you run out of removable nodes before removing all of them, whatever is left is tangled in a cycle.",
+    ],
     mentalModel: {
       lines: [
         "Directed: colour nodes white, grey while on the current path, black when done.",
@@ -743,6 +781,14 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       "you want DP over a DAG and need a processing order",
     ],
     typicalQuestion: "Return an order in which all courses can be taken.",
+    teach: [
+      "You have tasks and rules saying which must come before which. Put them in a workable order.",
+      "Think about how you would do it by hand. Find something with nothing waiting on it and do that first. Crossing it off may free up other tasks. Repeat.",
+      "That is the whole algorithm. Count how many prerequisites each task has. Queue everything at zero. Each time you take one from the queue, decrement its dependents, and queue any that just hit zero.",
+      "It detects impossible input for free. Count how many tasks came out. If it is fewer than you started with, whatever is missing was waiting on something that was itself waiting — a cycle — and no valid order exists.",
+      "One direction to keep straight: 'a must come before b' is an edge from a to b. Reversing that gives a perfectly plausible-looking order that is exactly backwards.",
+      "The payoff goes beyond scheduling. Once the nodes are in this order, every dependency of a node is already final when you reach it. That is what makes dynamic programming over a directed acyclic graph a simple left-to-right sweep.",
+    ],
     mentalModel: {
       lines: [
         "Repeatedly take a node with nothing left waiting on it.",
@@ -910,6 +956,14 @@ func wordNeighbours(word string, dict map[string]bool) []string {
       "Kruskal's algorithm — DSU is its core",
     ],
     typicalQuestion: "Find the edge that, when added, creates a cycle.",
+    teach: [
+      "Edges arrive one at a time, and after each one you must answer whether two things are now connected. Re-running a search after every edge is far too slow.",
+      "Represent each group as a tree, where the root is the group's name. Two things are connected exactly when they have the same root.",
+      "Find walks from a node up to its root. Union takes two roots and hangs one under the other, merging the groups in a single pointer write.",
+      "Left alone, those trees can grow into long chains and Find becomes slow. Two small habits stop that. First, always hang the smaller tree under the bigger, so depth grows slowly. Second — and this is the clever one — while walking up in Find, point the nodes you pass directly at their grandparent. Every lookup quietly flattens the path it used.",
+      "Together these make each operation effectively constant. Not exactly constant in theory, but the theoretical bound is under five for any input that fits in a computer.",
+      "One limit worth knowing: it only merges. There is no cheap way to split a group again. If you need to undo, you have to skip the flattening and keep a log of changes.",
+    ],
     mentalModel: {
       lines: [
         "Every group is a tree, and the root is its name.",
@@ -1059,6 +1113,14 @@ func (d *MapDSU) Union(a, b string) {
       "the problem is a 2-SAT instance in disguise",
     ],
     typicalQuestion: "Find all strongly connected components of a directed graph.",
+    teach: [
+      "In a directed graph, u reaching v does not mean v reaches u. A strongly connected component is a group where everyone can reach everyone else, both ways.",
+      "Why bother? Because if you squash each such group into a single node, every remaining edge points one way and the graph becomes acyclic. And acyclic graphs are easy — you can order them and sweep through.",
+      "Tarjan's algorithm finds them in one pass. As you walk, record when each node was first reached, and track the earliest-reached node that it can still get back to. Keep the current path on a stack.",
+      "When a node cannot reach anything earlier than itself, it is the top of a component: everything above it on the stack, down to and including it, forms one group. Pop them off together.",
+      "Kosaraju's version is two passes and easier to remember: walk the graph noting the order things finish in, then walk the reversed graph in the opposite of that order, and each search marks out one component.",
+      "The same machinery of first-reached and earliest-reachable, applied to an undirected graph, gives you bridges and articulation points — the edges and nodes that would disconnect the graph if removed.",
+    ],
     mentalModel: {
       lines: [
         "A strong component is a group where everyone can reach everyone.",
@@ -1211,6 +1273,14 @@ func kosaraju(n int, adj, radj [][]int) []int {
       "the answer is a tree: exactly V-1 edges, no cycles",
     ],
     typicalQuestion: "What is the minimum cost to connect all the points?",
+    teach: [
+      "Connect every node as cheaply as possible. The result has no loops — a loop would mean one edge you could delete while staying connected — so it is a tree, with exactly one fewer edge than there are nodes.",
+      "One fact makes both algorithms work. Split the nodes into any two groups. The cheapest edge crossing that split must belong to some cheapest tree. If it did not, you could swap it in for whatever else crosses and get a cheaper one.",
+      "Kruskal uses that globally. Sort every edge by cost and take them in order, skipping any that would close a loop. Union-Find answers 'would this close a loop' instantly: it does if both ends already share a root.",
+      "Prim uses the same fact locally. Grow one tree from any starting node, and each round take the cheapest edge leaving it. That is the cheapest edge across the split between the tree and everything else.",
+      "Choose by shape. A list of edges suits Kruskal. A dense or made-up-on-the-fly graph — like every pair of points on a plane — suits Prim, which can scan for the nearest node without ever listing the edges.",
+      "Always check the end: if you took fewer than n-1 edges, the graph was never connected, and the answer is impossible rather than a partial total.",
+    ],
     mentalModel: {
       lines: [
         "Kruskal: sort the edges and take any that does not close a loop.",
@@ -1346,6 +1416,13 @@ func kosaraju(n int, adj, radj [][]int) []int {
       "the question asks whether such a split is possible at all",
     ],
     typicalQuestion: "Can these people be split into two groups so that nobody dislikes someone in their group?",
+    teach: [
+      "Can these people be split into two rooms so that nobody shares with someone they dislike? Every dislike is an edge, and you want the two ends of every edge in different rooms.",
+      "Try it greedily. Put someone in room A. Everyone they dislike must be in room B. Everyone those people dislike must be back in A. Keep going and the whole connected group is forced — there is never a choice after the first one.",
+      "So run a search, colouring each node the opposite of the node you came from. If you ever reach a node that is already coloured the same as its neighbour, the split is impossible.",
+      "And there is a clean reason why. Alternating colours along a loop only works if the loop has even length. So a graph can be two-coloured exactly when it has no odd-length loop.",
+      "Two practical notes: start a fresh search from every uncoloured node, because the graph may come in several disconnected pieces; and use 0 for 'not yet coloured' with 1 and -1 for the two rooms, so an uncoloured node is never mistaken for a coloured one.",
+    ],
     mentalModel: {
       lines: [
         "Colour a node, then colour all its neighbours the other colour.",
@@ -1447,6 +1524,14 @@ func kosaraju(n int, adj, radj [][]int) []int {
       "all pairs and n is small (≤ 400) → Floyd-Warshall",
     ],
     typicalQuestion: "What is the cheapest route from src to dst with at most k stops?",
+    teach: [
+      "Every shortest path algorithm does the same one thing: if going through u gets you to v more cheaply than what you have recorded, write down the better number. That is called relaxing an edge.",
+      "What separates them is the order they try edges in, and that order is dictated by the weights. So read the weights before choosing.",
+      "All steps cost the same: BFS. Rings already come out in distance order, and nothing beats O(V+E).",
+      "Weights differ but none is negative: Dijkstra. Always settle the closest unfinished node next, and it can never be improved later.",
+      "Negative weights, or a limit on the number of hops: Bellman-Ford. Just relax every edge, n-1 times over. It is slower, but it makes no assumptions. One extra round that still improves something proves a negative loop exists.",
+      "Every pair of nodes and a small graph: Floyd-Warshall. Three nested loops, where the outer one is the node allowed as a stopover. That loop order is not a style choice — put k anywhere but outermost and the answers are silently wrong.",
+    ],
     mentalModel: {
       lines: [
         "All four algorithms do the same thing: if a shorter way shows up, take it.",
@@ -1574,6 +1659,14 @@ func kosaraju(n int, adj, radj [][]int) []int {
       "the cost of a path only ever grows as you extend it",
     ],
     typicalQuestion: "How long until every node receives the signal?",
+    teach: [
+      "Weighted edges, none negative, and you want the cheapest route. BFS will not do, because a route with more hops can easily be cheaper.",
+      "Keep the frontier in a min-heap ordered by the best distance found so far. Take the closest unfinished node, relax its edges, and push any improvements back in.",
+      "Why is taking the closest safe? Because no edge is negative. Any other route to that node would have to pass through something already further away, and going further can only add cost. So the number you have is final and you never revisit it. That is the whole proof, and it is also exactly what negative edges break.",
+      "In practice there is no clean way to lower a key inside a heap, so do not try. Push the improved entry as a duplicate, and when you pop something whose distance is worse than what you have recorded, skip it. Cheap, simple, correct.",
+      "What makes Dijkstra worth knowing well is how far it stretches. Replace the sum with a max and it finds the path whose worst step is smallest. Replace it with a product and a max-heap and it finds the most likely path.",
+      "One thing it cannot do unaided is a constraint like 'at most k stops', because a pricier path with fewer stops may be the one you need. Make the stop count part of the state, or use Bellman-Ford.",
+    ],
     mentalModel: {
       lines: [
         "Keep the frontier in a min-heap, ordered by distance so far.",
@@ -1731,6 +1824,14 @@ func dijkstraLayered(n, maxStops int, adj [][]Edge, src, dst int) int {
       "running one BFS per source would be O(sources × V)",
     ],
     typicalQuestion: "How many minutes until every orange is rotten?",
+    teach: [
+      "Every rotten orange infects its neighbours each minute, and several are rotten from the start. How long until none are fresh? Or: for every cell, how far is the nearest zero?",
+      "The instinct is to run a search from each source and take the smallest answer. With many sources that is many full searches.",
+      "Instead imagine one invisible node joined to every source by an edge of no cost. A single search from that node reaches all the real sources at step zero, and then spreads outwards together.",
+      "In code that means one change: put every source in the queue before the loop begins, rather than just one. Everything after is an ordinary BFS, and each cell's ring number is its distance to the closest source.",
+      "When you are counting rounds, check afterwards for anything still unreached. Cells the spread never touched are usually the failure case the problem is asking about.",
+      "The same reversal is worth remembering in the other direction. When many starting points share one destination, do not search from each start — search backwards from the destination once.",
+    ],
     mentalModel: {
       lines: [
         "Put every starting point in the queue before the loop begins.",

@@ -15,6 +15,14 @@ export const advanced: Pattern[] = [
       "you need O(n log n) and no greedy or DP formulation is apparent",
     ],
     typicalQuestion: "Count how many pairs are inverted in this array.",
+    teach: [
+      "Cut the problem in half, solve both halves the same way, then combine. Merge sort is the standard example, but the sorting is not the interesting part.",
+      "The interesting part is always the combine step, because that is where you handle everything the two halves could not see on their own.",
+      "Counting inversions shows this well. Sort the array with merge sort, and while merging ask a question the halves could not answer: how many pairs have the left element bigger than the right one? When you take an element from the right half, every element still waiting in the left half is bigger than it — so add that count. Free information, gathered during work you were doing anyway.",
+      "The cost follows a simple shape. Halving gives you log n levels, and if the combine is linear, each level costs O(n), so the total is n log n.",
+      "Quickselect is the variation where you only recurse into one side. Partition around a pivot, see which side the kth element is in, and throw the other side away. That gives O(n) on average instead of n log n.",
+      "One warning on quicksort-style code: always pick the pivot at random. Otherwise sorted input drives it straight into its quadratic worst case, which is exactly the input people test with.",
+    ],
     mentalModel: {
       lines: [
         "Cut the problem in half, solve both halves, then put them back together.",
@@ -174,6 +182,14 @@ func partition(a []int, lo, hi int) int {
       "results from the two halves can be combined by sorting or hashing",
     ],
     typicalQuestion: "Find the subset sum closest to a goal, with n up to 40.",
+    teach: [
+      "Forty numbers and you need the subset whose total is closest to a goal. Trying every subset is 2 to the 40, about a trillion. Too slow. But there is no clever structure to exploit either.",
+      "Split the list in half. Twenty numbers each side, and 2 to the 20 is only about a million per side. Perfectly manageable.",
+      "Work out every subset total for the left half, and every subset total for the right half. Now any full subset is one choice from each side, so its total is a left total plus a right total.",
+      "Sort the left totals. Then for each right total r, you want the left total closest to goal minus r — which is a binary search. A million searches, each about twenty steps.",
+      "The reason this works is worth stating plainly: splitting turns 2 to the n into two runs of 2 to the n over 2, which is the square root of the original. A trillion becomes a million.",
+      "So the signature is n around 35 to 45, with subsets involved. Split as evenly as you can — 25 and 15 is thirty times more work than 20 and 20 — and do not forget the empty subset on each side.",
+    ],
     mentalModel: {
       lines: [
         "2^40 is far too many. 2^20 is about a million.",
@@ -292,6 +308,14 @@ func partition(a []int, lo, hi int) int {
       "an average-case guarantee is good enough here",
     ],
     typicalQuestion: "Shuffle an array so that every permutation is equally likely.",
+    teach: [
+      "Sometimes randomness is not a compromise but the correct tool. It protects you from bad inputs and it lets you sample fairly.",
+      "Shuffling looks easy and is easy to get wrong. Walk the array, and at each position swap with a random position at or after it. Every arrangement then comes out equally likely.",
+      "Choose the swap partner from the whole array instead and the shuffle is biased. That version can produce n to the n outcomes for n! arrangements, and since the first does not divide evenly by the second, some arrangements must come up more often than others. It looks random and is not.",
+      "Rejection sampling handles the awkward cases. To make a fair number from 1 to 10 using only a fair 7-sided die, roll twice for 49 equally likely outcomes, use the first 40, and reroll the other 9. Throwing them away is what keeps it fair — folding them back in would quietly favour some results.",
+      "Weighted picking is prefix sums plus a binary search. Build running totals, draw one uniform number, and find where it lands.",
+      "And one line matters more than the rest: choose your quicksort pivot at random. It turns a worst case that real inputs hit routinely into one you will never see.",
+    ],
     mentalModel: {
       lines: [
         "Randomness protects you from the worst case.",
@@ -406,6 +430,14 @@ func (p *WeightedPicker) Pick() int {
       "you need a uniform sample, not the first or last match",
     ],
     typicalQuestion: "Return a random node from a linked list of unknown length, in O(1) space.",
+    teach: [
+      "Pick one item uniformly at random from a stream, without knowing how long the stream is and without storing it.",
+      "It sounds impossible, because a fair choice seems to need the total up front. It is not.",
+      "Keep one item. When the ith item arrives, replace what you are holding with probability 1 in i. Otherwise keep what you have.",
+      "Check that it works. The first item is kept with certainty. The second replaces it half the time, so both end at one half. The third comes in with probability one third, leaving two thirds shared between the first two — one third each. At every point all items are equally likely.",
+      "In general, item j is taken with probability 1/j, then has to survive each later item, which happens with probability j/(j+1), then (j+1)/(j+2), and so on. Multiply them and everything cancels except 1/n.",
+      "For k items instead of one, fill a reservoir of k first, then for each later item replace a random slot with probability k over i. Same argument, same result — one pass, no idea of the length, memory proportional to k rather than n.",
+    ],
     mentalModel: {
       lines: [
         "Keep the item you are looking at with probability 1 in i.",
@@ -509,6 +541,14 @@ func (p *WeightedPicker) Pick() int {
       "a small false-positive probability is acceptable, or verifiable cheaply",
     ],
     typicalQuestion: "Find the longest substring that appears at least twice.",
+    teach: [
+      "Comparing two long substrings costs their length. If you have to do it thousands of times, that alone sinks the solution.",
+      "So turn each substring into a single number. Read it as a number written in some base, taken modulo a large value. Comparing two stretches of text becomes comparing two integers.",
+      "Precompute the hash of every prefix and any substring's hash comes out in one step, with a subtraction and a multiply. Or roll a fixed-width window along, dropping the outgoing character and adding the incoming one.",
+      "Different numbers always mean different text. Equal numbers almost always mean equal text, but not quite always — two different strings can collide. With a 61-bit modulus that is vanishingly unlikely, and when correctness really matters you compare the actual characters once, only on a match.",
+      "The failure mode is not random, it is deliberate. If you always use base 31 and modulus a billion and seven, someone can construct input designed to collide. Choose the base at random at run time and no fixed test case can target you.",
+      "One last Go detail: after the subtraction, add the modulus back before taking the remainder, or you get a negative hash and nothing matches.",
+    ],
     mentalModel: {
       lines: [
         "Turn a stretch of text into one number.",
@@ -653,6 +693,14 @@ func (sh *StrHash) Range(l, r int) uint64 {
       "you are about to compute a slope — use a cross product instead",
     ],
     typicalQuestion: "Build the convex hull enclosing all the given points.",
+    teach: [
+      "Geometry problems tempt you into slopes, and slopes are a trap. A vertical line divides by zero, and two lines with the same slope can compare as different once floating point has rounded them.",
+      "Use the cross product instead. For three points O, A and B it is (A.x-O.x)(B.y-O.y) minus (A.y-O.y)(B.x-O.x).",
+      "It answers the only question geometry really asks: which way did we turn? Positive means left, negative means right, zero means straight. There is no division, so with integer coordinates the answer is exact — no rounding, no infinity, no special cases.",
+      "Almost everything builds on that. Three points are in a line when it is zero. Its absolute value is twice the area of the triangle. Summing it around a polygon gives the polygon's area, which is the shoelace formula.",
+      "A convex hull is the same test in a loop. Sort the points, then walk them building the lower edge: before adding a point, pop anything that would make you turn the wrong way. Do it again for the upper edge and join them.",
+      "When you genuinely must group points by slope, do not divide. Keep dy and dx as a pair, reduce them by their gcd, and fix the sign so that (1,2) and (-1,-2) become the same key.",
+    ],
     mentalModel: {
       lines: [
         "The cross product tells you which way a turn goes.",
@@ -803,6 +851,14 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       "the question is about the period of a string",
     ],
     typicalQuestion: "Find the first occurrence of a pattern in a text.",
+    teach: [
+      "Search for a pattern inside a text. The naive way lines the pattern up at each position and compares, and on input like 'aaaaab' inside 'aaaaaaaa' it re-reads nearly the whole pattern every time.",
+      "Think about what happens when a mismatch occurs after a partial match. You just read those characters — you know exactly what they were. Sliding the pattern back to the start and re-reading them is throwing away information you already have.",
+      "So work out in advance, for every prefix of the pattern, the longest piece that is both a start and an end of it. If the pattern is 'abab' and you matched 'aba' before failing, the 'a' at the end is also the start of the pattern, so you can slide forward and continue from there instead of restarting.",
+      "That table is the whole algorithm. On a mismatch, drop back to what the table says and carry on. The pointer into the text never moves backwards, which is why the whole search is linear.",
+      "It looks like it could be quadratic because of the fallback loop, but the pattern pointer only ever goes up by one per character read, and each fallback pushes it down. So the total falling is capped by the total rising.",
+      "One fact from that table is worth memorising on its own: n minus the last entry is the length of the shortest repeating block. That one line answers 'is this string just a repetition' by itself.",
+    ],
     mentalModel: {
       lines: [
         "Work out, for each prefix, how much of it is also a suffix.",
@@ -930,6 +986,14 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       "problems about borders and repetitions",
     ],
     typicalQuestion: "Find all occurrences of a pattern in a text in linear time.",
+    teach: [
+      "The Z array answers, for every position, how many characters starting there also match the very beginning of the string.",
+      "Computed naively that is quadratic. The saving comes from remembering the match that reached furthest right so far, and where it started.",
+      "If your current position falls inside that stretch, you are looking at a region that already matched the beginning — so the answer here is the same as the answer at the mirrored position near the start, which you worked out earlier. Copy it and only start comparing characters past the right edge.",
+      "Because the right edge only ever moves forward, all the actual character comparisons across the whole string add up to n. Linear.",
+      "To search for a pattern, glue pattern, then a separator that appears in neither string, then the text. Any position in the text part whose Z value equals the pattern length is a match. That separator matters: without it a match could run across the join and give a false answer.",
+      "It solves the same problems as KMP with the same complexity. Most people find one of the two easier to reconstruct under pressure — learn whichever that is for you.",
+    ],
     mentalModel: {
       lines: [
         "z[i] says how much of the string's own start is repeated at position i.",
@@ -1039,6 +1103,14 @@ func area2(a, b, c Point) int { return cross(a, b, c) }`,
       "a binary search over the length is combined with an equality test",
     ],
     typicalQuestion: "Find the longest substring that occurs more than once.",
+    teach: [
+      "You need to compare every window of length k against every other. Hashing each window from scratch costs k per window, which puts you back at n times k.",
+      "But neighbouring windows overlap almost completely. Only one character left and one joined.",
+      "Treat the window as a number in some base. Then sliding it one step is arithmetic: subtract the outgoing character times the base to the power k-1, multiply everything by the base, and add the incoming character. Constant time per step.",
+      "Precompute that power once outside the loop — recomputing it each step is a common and pointless cost.",
+      "When the alphabet is tiny there is something better than hashing: pack exactly. DNA has four letters, so two bits each, and a 10-letter window fits in 20 bits. That is not a hash, it is the window itself as an integer, so there are no collisions to worry about at all.",
+      "Rolling hashes pair beautifully with binary search. To find the longest repeated substring, binary search the length — if a repeat of length 8 exists then so does one of length 7 — and use hashing to test each candidate length in one pass.",
+    ],
     mentalModel: {
       lines: [
         "Treat the window as a number written in some base.",
@@ -1178,6 +1250,14 @@ func dupOfLength(s string, k int) string {
       "the string is large — 10^5 or more",
     ],
     typicalQuestion: "Find the longest palindromic substring in linear time.",
+    teach: [
+      "Expanding around all 2n-1 centres finds the longest palindrome in n squared time. That is usually fine. When the string is huge, Manacher gets it to linear, using the same idea that makes the Z algorithm fast.",
+      "First remove the awkwardness. Even-length palindromes have their centre between two letters, which means two cases everywhere. Put a separator between every letter — 'abba' becomes '#a#b#b#a#' — and now every palindrome has odd length and sits on a character. One case.",
+      "Then keep track of the palindrome that reaches furthest right, and where it is centred.",
+      "If the position you are working on lies inside that palindrome, its mirror image on the other side of the centre has already been measured. Because the whole region is symmetric, the answer here is at least that — so copy it, and only start comparing characters past the right edge.",
+      "The right edge only ever moves forward, and every character comparison you make moves it. So all the comparing across the whole string adds up to n.",
+      "The one thing to be careful about is mapping back. A radius measured in the padded string is a length in the original, and the start is (centre minus radius) / 2. Get that wrong and everything else is right but the answer is nonsense.",
+    ],
     mentalModel: {
       lines: [
         "Put a separator between every letter so every palindrome has an odd length.",
@@ -1295,6 +1375,14 @@ func dupOfLength(s string, k int) string {
       "the state count is small, typically under 100",
     ],
     typicalQuestion: "Compute the n-th Fibonacci number for n up to 1e18, modulo 1e9+7.",
+    teach: [
+      "Fibonacci for n equal to 10 to the 18th. A loop would take forever, and there is no simple closed form that stays exact.",
+      "Notice that one step of the recurrence is a fixed piece of arithmetic: the next pair is built from the current pair by the same rule, every time.",
+      "Write that step as a matrix multiplying a vector. Then two steps is that matrix applied twice, and n steps is the matrix raised to the power n.",
+      "Now the earlier trick applies. You do not need n multiplications to raise something to the n — square repeatedly and multiply in the pieces that match the bits of n. About sixty multiplications gets you to 10 to the 18th.",
+      "The same idea counts paths. Raise a graph's adjacency matrix to the power k and the entry at (i, j) is the number of walks of exactly k edges from i to j — because each multiplication joins one more edge onto every path.",
+      "It only works when the recurrence is linear, meaning each new value is a fixed combination of previous ones. Multiply two states together anywhere and the matrix form is gone. And with a small n, an ordinary O(n) loop is simpler and faster — this is for when n is enormous.",
+    ],
     mentalModel: {
       lines: [
         "Write one step of the recurrence as a matrix times a vector.",
@@ -1423,6 +1511,14 @@ func matPow(m Matrix, p int) Matrix {
       "you need to divide under a modulus — that means a modular inverse",
     ],
     typicalQuestion: "Count the arrangements modulo 1e9+7.",
+    teach: [
+      "When a problem says 'return the answer modulo 1e9+7', it is telling you the real answer is too large to hold. So you take the remainder as you go, at every step, keeping every number small.",
+      "Adding, subtracting and multiplying all survive this. The remainder of a sum is the sum of the remainders, and the same for products, so you can reduce whenever you like.",
+      "Division does not survive. There is no such thing as taking a remainder and then dividing — the answer will simply be wrong.",
+      "Instead you multiply by an inverse: the number that, multiplied by b, gives 1 under the modulus. When the modulus is prime — and 1e9+7 is — Fermat's little theorem says that inverse is b raised to the power (mod - 2), which you compute by fast exponentiation.",
+      "For binomial coefficients, work out all the factorials once and their inverses once, and then every nCr is two multiplications.",
+      "Finally, a Go-specific trap that costs people entire submissions. The % operator keeps the sign of the left-hand side, so -7 % 3 is -1 rather than 2. After any subtraction, add the modulus back before the final %.",
+    ],
     mentalModel: {
       lines: [
         "Add, subtract and multiply as normal, taking the remainder as you go.",

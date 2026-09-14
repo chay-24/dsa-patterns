@@ -44,8 +44,14 @@ export type Pattern = {
   recognition: string[];
   /** A sample question stem that should map to this pattern. */
   typicalQuestion?: string;
+  /**
+   * The lesson. Short paragraphs, written to a student who has never seen
+   * this before: what you would try first, why it falls over, the one
+   * observation that fixes it, and why the fix is correct.
+   */
+  teach: string[];
   mentalModel: {
-    /** 2–5 short lines. No paragraphs. */
+    /** The recap: 2–5 short lines for revision. No paragraphs. */
     lines: string[];
     /** Monospace diagram. Rendered verbatim in a bordered block. */
     diagram?: string;

@@ -47,6 +47,23 @@ def replace_lines(block: str, lines) -> str:
     return out
 
 
+def replace_teach(block: str, paras) -> str:
+    """Insert or replace the teach[] block, which sits just before mentalModel."""
+    body = "".join(f'      "{esc(t)}",\n' for t in paras)
+    new = "    teach: [\n" + body + "    ],"
+
+    if re.search(r"    teach: \[", block):
+        out, n = re.subn(r"    teach: \[\n.*?\n    \],", new, block, count=1, flags=re.S)
+        if n != 1:
+            raise ValueError("teach block not replaced")
+        return out
+
+    out, n = re.subn(r"    mentalModel: \{", new + "\n    mentalModel: {", block, count=1)
+    if n != 1:
+        raise ValueError("mentalModel anchor not found")
+    return out
+
+
 def replace_recognition(block: str, items) -> str:
     body = "".join(f'      "{esc(i)}",\n' for i in items)
     new = "    recognition: [\n" + body + "    ],"
@@ -170,6 +187,8 @@ def main(patch_path: str):
         a, b = block_span(src, slug)
         block = src[a:b]
         try:
+            if "teach" in ops:
+                block = replace_teach(block, ops["teach"])
             if "lines" in ops:
                 block = replace_lines(block, ops["lines"])
             if "key" in ops:

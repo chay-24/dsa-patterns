@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Search, X } from "lucide-react";
 import { SearchCommand, loadSearchIndex } from "./search-command";
+import { Gopher } from "./gopher";
 import { cn } from "@/lib/utils";
 
 type NavItem = { title: string; href: string };
@@ -93,8 +94,11 @@ export function Shell({
     <SearchContext.Provider value={openSearch}>
       {/* ── mobile top bar ─────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-bg/85 px-4 backdrop-blur-md lg:hidden">
-        <Link href="/" className="font-mono text-[13px] tracking-tight text-fg">
-          go<span className="text-accent">/</span>dsa
+        <Link href="/" className="logo-brand flex items-center gap-2.5">
+          <Gopher height={30} />
+          <span className="font-mono text-[13px] tracking-tight text-fg">
+            go<span className="text-accent">/</span>dsa
+          </span>
         </Link>
 
         <button
@@ -130,21 +134,20 @@ export function Shell({
             className="mt-8"
             large
           />
+          <GopherCredit className="mt-10 border-t px-0" />
         </nav>
       ) : null}
 
       {/* ── desktop sidebar ────────────────────────────────────────── */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col border-r border-border bg-bg lg:flex">
-        <div className="px-6 pb-5 pt-7">
+        <div className="px-6 pb-6 pt-7">
           <Link
             href="/"
-            className="font-mono text-[13px] tracking-tight text-fg transition-colors hover:text-accent"
+            aria-label="go/dsa — home"
+            className="logo-brand inline-flex rounded-md"
           >
-            go<span className="text-accent">/</span>dsa
+            <Gopher height={36} />
           </Link>
-          <p className="mt-1 font-mono text-2xs text-fg-faint">
-            pattern-first reference
-          </p>
         </div>
 
         <div className="px-4">
@@ -172,6 +175,8 @@ export function Shell({
             className="mt-7"
           />
         </nav>
+
+        <GopherCredit />
       </aside>
 
       <div className="lg:pl-[232px]">{children}</div>
@@ -231,6 +236,40 @@ function NavGroup({
         })}
       </ul>
     </div>
+  );
+}
+
+/**
+ * CC BY asks for the credit to travel with the artwork, so it lives in the
+ * sidebar rather than only in a footer.
+ */
+function GopherCredit({ className }: { className?: string }) {
+  return (
+    <p
+      className={cn(
+        "border-t border-border px-4 py-3 text-[10.5px] leading-relaxed text-fg-faint",
+        className,
+      )}
+    >
+      Gopher by{" "}
+      <a
+        href="http://reneefrench.blogspot.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline decoration-dotted underline-offset-2 transition-colors hover:text-fg-muted"
+      >
+        Renée French
+      </a>
+      ,{" "}
+      <a
+        href="https://creativecommons.org/licenses/by/3.0/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline decoration-dotted underline-offset-2 transition-colors hover:text-fg-muted"
+      >
+        CC BY 3.0
+      </a>
+    </p>
   );
 }
 

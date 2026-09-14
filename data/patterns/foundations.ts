@@ -16,6 +16,12 @@ export const foundations: Pattern[] = [
       "a matrix walk where the boundaries, not the direction, are the real state",
     ],
     typicalQuestion: "Rearrange the array in place using O(1) extra space.",
+    teach: [
+      "A slice in Go is a window onto an array. It knows where the data starts, how many items you can see, and how much room is left behind it. That third part is why append will sometimes quietly move your data somewhere else.",
+      "Most in-place problems come down to one idea. Walk the array with a reader, and keep a second index — the writer — marking where the next thing worth keeping should go.",
+      "The reader moves every step. The writer only moves once it has just stored a keeper. So the writer falls behind, and everything behind it is your answer. No second array, no allocation.",
+      "The other trick is stranger. If every value is between 1 and n, then a value and an index are the same kind of thing. You can put value v at index v-1, or flip the sign at index v-1 to mean 'I have seen v'. The array becomes its own notebook.",
+    ],
     mentalModel: {
       lines: [
         "Use two indices: one reads, one writes.",
@@ -154,6 +160,12 @@ func abs(x int) int {
       "you need a standard form of a word, like its sorted letters or its letter counts",
     ],
     typicalQuestion: "Group all anagrams together.",
+    teach: [
+      "In Go a string cannot be changed. s[i] hands you a byte, and assigning to it will not compile. So the first decision in any string problem is what you turn it into.",
+      "If the input is plain English letters, use []byte: one byte per character, and you can write to it freely. The moment accents or emoji appear, switch to []rune, because one character can span several bytes and indexing bytes would cut it in half.",
+      "The second habit is about building output. Writing s += x inside a loop looks harmless, but each += copies the whole string so far. Over n steps that is n squared work. strings.Builder keeps one growing buffer instead.",
+      "And when a problem says 'lowercase English letters', read that as an instruction. Use a [26]int instead of a map. It is faster, it allocates nothing, and since Go compares arrays with ==, the whole letter count becomes one value you can use as a map key.",
+    ],
     mentalModel: {
       lines: [
         "A Go string is read-only bytes.",
@@ -264,6 +276,12 @@ func reverse(b []byte, i, j int) {
       "the problem says O(n) and the data is unsorted",
     ],
     typicalQuestion: "Find two numbers adding up to a target, in O(n).",
+    teach: [
+      "Here is the shape to watch for. You write a loop, and inside it a second loop whose only job is to ask 'have I seen this before?' or 'how many were there?'. That inner loop is a search, and a map does the same search in one step.",
+      "Take two-sum. For each number x you need a partner worth target - x. Rather than scanning for the partner, remember every number you have already walked past. The question becomes a single lookup.",
+      "The order matters. Look up first, then insert. If you insert x before searching for it, then when the target is exactly twice x the number will cheerfully pair with itself.",
+      "The part people get wrong is the key. It is often not the element. To group anagrams the key is the sorted word, or the letter counts — something you compute from the element so everything that belongs together lands in the same bucket.",
+    ],
     mentalModel: {
       lines: [
         "A map answers one question fast: have I seen this before?",
@@ -389,6 +407,12 @@ func reverse(b []byte, i, j int) {
       "the 2D version: totals over a submatrix",
     ],
     typicalQuestion: "Answer many range-sum queries over an immutable array.",
+    teach: [
+      "If the same array is asked for range sums over and over, adding the numbers each time is wasted effort. The stretch from 3 to 7 and the stretch from 4 to 9 share most of their numbers, and you keep re-adding them.",
+      "So add them once. Build an array P where P[i] holds the total of everything before position i. P[0] is 0, because nothing comes before the start.",
+      "Now any range is a subtraction. The sum from i to j is P[j+1] minus P[i]: everything up to j, minus the part you did not want. One pass to build, then every question is instant.",
+      "Two details save you. Make P one longer than the array and leave P[0] at 0 — that is what lets the formula work at index 0 with no special case. And it only works for things you can take back out. Sums, counts and XOR are fine; you cannot subtract a minimum back out.",
+    ],
     mentalModel: {
       lines: [
         "P[0] = 0, and P[i] is the sum of the first i values.",
@@ -503,6 +527,12 @@ func (s *Prefix2D) Range(r1, c1, r2, c2 int) int {
       "the coordinate space is small, or can be compressed to be small",
     ],
     typicalQuestion: "Apply thousands of range increments, then report the final array.",
+    teach: [
+      "Suppose a thousand updates arrive, each saying 'add 5 to every seat from 10 to 900', and you are only asked for the final row at the very end. Applying each one properly means touching nearly a thousand seats, a thousand times.",
+      "But look at what an update really is. Something changes at the start, and changes back just after the end. So record only those two moments: write +5 at position 10, and -5 at position 901.",
+      "Do that for every update. The array you have built now holds differences, not values. Sweep it once from left to right carrying a running total, and every update replays itself in the right place.",
+      "A thousand updates now cost two writes each, plus one final pass. The same idea handles positions too large for an array: instead of writing into slots, sort the moments and walk them in order. That is a sweep line.",
+    ],
     mentalModel: {
       lines: [
         "A difference array is a prefix sum run backwards.",
@@ -605,6 +635,12 @@ func (s *Diff) Build() []int {
       "you want to two-point or binary search afterwards",
     ],
     typicalQuestion: "Find all unique triplets summing to zero.",
+    teach: [
+      "Sorting is almost never the answer to a problem. It is what you do just before the answer becomes easy.",
+      "The test is simple: ask what becomes true once the data is in order that was not true before. Equal values sit next to each other, so duplicates can be skipped with one comparison. The smallest is at one end and the largest at the other, so two pointers can close in. Each value is at least the one before it, so binary search works.",
+      "If nothing becomes true, do not sort. You are paying n log n for nothing — and if the answer is an index, you have just destroyed it.",
+      "When you do sort, the interesting decision is rarely the algorithm; Go's is fine. It is the comparator. 'Arrange the numbers to form the largest value' is solved by putting a before b when a+b reads larger than b+a. That one line is the whole problem. The sort is plumbing.",
+    ],
     mentalModel: {
       lines: [
         "Sorting is rarely the answer. It is what makes the answer easy.",
@@ -731,6 +767,12 @@ sort.Slice(nums, func(i, j int) bool {
       "coordinates are sparse — millions of possible positions, thousands used",
     ],
     typicalQuestion: "Count how many elements to the right are smaller than each element.",
+    teach: [
+      "Some structures — a Fenwick tree, a segment tree, a counting array — want to use a value as an index. That is fine when values reach a thousand. It falls apart when they reach a billion.",
+      "But look at how many values you actually have. If the input holds two hundred thousand numbers, then at most two hundred thousand distinct values exist, however large each one is.",
+      "So sort the distinct values and give each one its position in that sorted list. A value of one billion might become 7. The array you need is now the size of the input, not the size of the number line.",
+      "Order survives this, which is the entire point: if a was smaller than b, its rank is still smaller, so every comparison still works. Distance does not survive. Ranks 7 and 8 could be a billion apart in reality, so never add or subtract ranks — keep the original values for that.",
+    ],
     mentalModel: {
       lines: [
         "Sort the distinct values and replace each one by its position.",
@@ -820,6 +862,13 @@ sort.Slice(nums, func(i, j int) bool {
       "the problem mentions XOR, parity, or counting set bits",
     ],
     typicalQuestion: "Count the primes below n.",
+    teach: [
+      "Most number problems have a loop in the obvious solution and a formula hiding behind it. The job is noticing which.",
+      "Euclid's rule is the first to know: gcd(a, b) equals gcd(b, a mod b). Each step shrinks the numbers quickly, so it finishes in about log n turns rather than testing every possible divisor.",
+      "The second is squaring. To compute a to the 13th you do not need thirteen multiplications. Write 13 in binary as 1101 and you only need a to the 1st, the 4th and the 8th — square as you go, and multiply into the result whenever a bit is set. Thirteen steps become four.",
+      "The third is the sieve. Instead of testing each number to see if it is prime, cross out multiples. Start crossing at i times i, because anything smaller already has a smaller factor that crossed it out.",
+      "One Go-specific warning: integers overflow silently, with no panic. In lcm, always write a / gcd * b and never a * b / gcd. Dividing first keeps the number small enough to survive.",
+    ],
     mentalModel: {
       lines: [
         "gcd(a, b) = gcd(b, a mod b). That loop finishes in O(log n).",
